@@ -226,7 +226,7 @@ namespace V5DLLAdapter
                 public int WhosBall;
                 public IntPtr UserData;
 
-                public Environment(Native.Field field, V5RPC.Proto.Team whosball, ResultType gamestate)
+                public Environment(Native.Field field, V5RPC.Proto.Team whosball, ResultType gamestate, IntPtr userData)
                 {
                     WhosBall = ToLegacyWhosball(whosball);
                     GameState = ToLegacyGameState(gamestate);
@@ -239,7 +239,7 @@ namespace V5DLLAdapter
                     }
                     CurrentBall = new Legacy.Ball() { Position = new Legacy.Vector3(field.ball.position) };
 
-                    UserData = IntPtr.Zero;
+                    UserData = userData;
 
                     // Useless field, just become 0
                     LastBall = new Legacy.Ball();

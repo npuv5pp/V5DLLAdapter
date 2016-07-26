@@ -259,6 +259,10 @@ namespace V5DLLAdapter
         string _lastDllPath = null;
         public override string Dll => IsLoaded ? _lastDllPath : null;
         
+        JudgeResultEvent.Types.ResultType gameState = JudgeResultEvent.Types.ResultType.PlaceKick;
+        Team whosball = Team.Nobody;
+        IntPtr userData = IntPtr.Zero;
+
         private readonly Placement placement = new Placement
         {
             Ball = new Ball {Position = new Vector2 {X = 0, Y = 0}},
@@ -316,6 +320,7 @@ namespace V5DLLAdapter
             };
             
             _create?.Invoke(ref env);
+            userData = env.UserData;
             return true;
         }
 
@@ -331,9 +336,6 @@ namespace V5DLLAdapter
             _destroy = null;
         }
 
-        JudgeResultEvent.Types.ResultType gameState = JudgeResultEvent.Types.ResultType.PlaceKick;
-        Team whosball = Team.Nobody;
-
         public override Wheel[] GetInstruction(Field field)
         {
             if (_strategy == null)
@@ -346,10 +348,11 @@ namespace V5DLLAdapter
             {
                 nativeField.Reverse();
             }
-            var env = new Native.Legacy.Environment(nativeField, whosball, gameState);
+            var env = new Native.Legacy.Environment(nativeField, whosball, gameState, userData);
             try
             {
                 _strategy(ref env);
+                userData = env.UserData;
             }
             catch (Exception e)
             {
