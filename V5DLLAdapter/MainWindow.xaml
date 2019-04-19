@@ -5,8 +5,29 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:V5DLLAdapter"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        
-    </Grid>
+        Title="V5DLLAdapter" Height="450" Width="600" MinHeight="200" MinWidth="400" Drop="Window_Drop" AllowDrop="True">
+    <DockPanel>
+        <Grid Margin="20,20,20,20" VerticalAlignment="Top" DockPanel.Dock="Top">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="25"/>
+                <RowDefinition Height="10" />
+                <RowDefinition Height="25"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="100"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="80"/>
+            </Grid.ColumnDefinitions>
+            <Label Content="策略文件" />
+            <TextBox x:Name="filePathEdit" Text="{Binding Path=Path}" Grid.Column="1" Margin="0,0,10,0" VerticalContentAlignment="Center" AllowDrop="True" PreviewDragOver="PreviewDragOver"/>
+            <Button x:Name="browseBtn" Content="浏览" Grid.Column="2" Click="BrowseBtn_Click"/>
+            <Label Content="端口" Grid.Row="2"/>
+            <StackPanel Orientation="Horizontal" Grid.Row="2" Grid.Column="1" Margin="0,0,10,0">
+                <TextBox x:Name="portEdit" Text="{Binding Path=Port, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Width="80"/>
+                <Button Name="TestBtn" Content="测试" Width="80" Margin="10,0,0,0" Click="TestBtn_Click"></Button>
+            </StackPanel>
+            <Button x:Name="startStopBtn" Content="启动/停止" Grid.Row="2" Grid.Column="2" Click="StartStopBtn_Click"/>
+        </Grid>
+        <TextBox x:Name="logBox" Text="Lorem ipsum&#xD;&#xA;" Margin="20,0,20,20" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Visible" PreviewDragOver="PreviewDragOver" />
+    </DockPanel>
 </Window>
