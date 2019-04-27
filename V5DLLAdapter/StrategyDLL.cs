@@ -38,6 +38,8 @@ namespace V5DLLAdapter
 
         IntPtr currentModule = IntPtr.Zero;
         public bool IsLoaded { get { return currentModule != IntPtr.Zero; } }
+        string _lastDllPath = null;
+        public string DLL { get { return IsLoaded ? _lastDllPath : null; } }
 
         public const int MAX_STRING_LEN = 128;
 
@@ -57,6 +59,7 @@ namespace V5DLLAdapter
             {
                 return false;
             }
+            _lastDllPath = dllPath;
             var hModule = LoadLibrary(dllPath);
             if (hModule == IntPtr.Zero)
             {
