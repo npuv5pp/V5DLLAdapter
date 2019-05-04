@@ -8,6 +8,7 @@ This program enables legacy DLLs to work with the new Simuro5v5 platform.
 ## Documentation
 
 TODO
+[Chinese Version Here](https://github.com/npuv5pp/V5DLLAdapter/blob/master/README.zh-CN.md)
 
 ## Credits
 
