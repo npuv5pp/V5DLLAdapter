@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -302,36 +304,6 @@ namespace V5DLLAdapter
             });
         }
 
-        private void Window_SourceInitialized(object sender, EventArgs e)
-        {
-            var hWnd = PresentationSource.FromVisual(this) as HwndSource;
-            hWnd.AddHook(WndProc);
-        }
-
-        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
-        {
-            const int WM_APP = 0x8000;
-            const long CMD_START = 1;
-            const long CMD_STOP = 2;
-            if (msg == WM_APP)
-            {
-                switch (wParam.ToInt64())
-                {
-                    case CMD_START:
-                        {
-                            Start();
-                        }
-                        return new IntPtr(1);
-                    case CMD_STOP:
-                        {
-                            Stop();
-                        }
-                        return new IntPtr(1);
-                }
-            }
-            return IntPtr.Zero;
-        }
-
         private void LogLevelCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             logItems.Items.Filter = logItems.Items.Filter;
@@ -389,9 +361,95 @@ namespace V5DLLAdapter
 
         private void FilterKeywordEdit_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Enter&&e.Source is TextBox tb)
+            if (e.Key == Key.Enter && e.Source is TextBox tb)
             {
                 tb.GetBindingExpression(TextBox.TextProperty).UpdateSource();
+            }
+        }
+
+        private void Window_SourceInitialized(object sender, EventArgs e)
+        {
+            var hWnd = PresentationSource.FromVisual(this) as HwndSource;
+            hWnd.AddHook(WndProc);
+            const int GWLP_USERDATA = -21;
+            SetWindowLong(hWnd.Handle, GWLP_USERDATA, new IntPtr(0x56352B2B));
+        }
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr SetWindowLong(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            const int WM_APP = 0x8000;
+            const int WM_COPYDATA = 0x004A;
+            if (msg == WM_APP)
+            {
+                const long CMD_START = 1;
+                const long CMD_STOP = 2;
+                switch (wParam.ToInt64())
+                {
+                    case CMD_START:
+                        {
+                            Start();
+                        }
+                        return new IntPtr(1);
+                    case CMD_STOP:
+                        {
+                            Stop();
+                        }
+                        return new IntPtr(1);
+                }
+            }
+            else if (msg == WM_COPYDATA)
+            {
+                const long DATA_LOG = 1;
+                var s = Marshal.PtrToStructure<COPYDATASTRUCT>(lParam);
+                switch (s.dwData.ToInt64())
+                {
+                    case DATA_LOG:
+                        {
+                            var buffer = new byte[s.cbData];
+                            Marshal.Copy(s.lpData, buffer, 0, buffer.Length);
+                            string data = Encoding.Unicode.GetString(buffer);
+                            ParseAndLog(data);
+                        }
+                        return new IntPtr(1);
+                }
+            }
+            return IntPtr.Zero;
+        }
+
+#pragma warning disable CS0649
+        struct COPYDATASTRUCT
+        {
+            public IntPtr dwData;
+            public uint cbData;
+            public IntPtr lpData;
+        }
+#pragma warning restore CS0649
+
+        readonly Regex logRegex = new Regex(@"^([a-zA-z])\s*/\s*([^:]+)\s*:", RegexOptions.Compiled);
+        private void ParseAndLog(string rawText)
+        {
+            var m = logRegex.Match(rawText);
+            if (m.Success)
+            {
+                string severityChar = m.Groups[1].Value;
+                string tag = m.Groups[2].Value.Trim();
+                string message = rawText.Substring(m.Index + m.Length);
+                Severity severity;
+                switch (severityChar.ToUpper())
+                {
+                    case "V": severity = Severity.Verbose; break;
+                    case "I": default: severity = Severity.Info; break;
+                    case "W": severity = Severity.Warning; break;
+                    case "E": severity = Severity.Error; break;
+                }
+                Log(message, tag, severity);
+            }
+            else
+            {
+                Log(rawText, tag: "CopyData");
             }
         }
     }

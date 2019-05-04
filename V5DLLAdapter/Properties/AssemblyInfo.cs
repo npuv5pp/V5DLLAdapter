@@ -8,11 +8,11 @@ using System.Windows;
 // 控制。更改这些特性值可修改
 // 与程序集关联的信息。
 [assembly: AssemblyTitle("V5DLLAdapter")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("This program enables legacy DLLs to work with the new Simuro5v5 platform.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("NWPU V5++ Team")]
 [assembly: AssemblyProduct("V5DLLAdapter")]
-[assembly: AssemblyCopyright("Copyright ©  2019")]
+[assembly: AssemblyCopyright("Copyright ©  2019 AzureFx")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
