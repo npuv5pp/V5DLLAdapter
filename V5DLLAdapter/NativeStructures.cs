@@ -20,7 +20,7 @@ namespace V5DLLAdapter
         struct JudgeResultEvent
         {
             public V5RPC.Proto.JudgeResultEvent.Types.ResultType type;
-            public V5RPC.Proto.Side actor;
+            public V5RPC.Proto.Team offensiveTeam;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = StrategyDLL.MAX_STRING_LEN)]
             public string reason;
         };
@@ -105,13 +105,13 @@ namespace V5DLLAdapter
         {
             public Field(V5RPC.Proto.Field obj)
             {
-                ourRobots = (from x in obj.OurRobots select new Robot(x)).ToArray();
+                SelfRobots = (from x in obj.SelfRobots select new Robot(x)).ToArray();
                 opponentRobots = (from x in obj.OpponentRobots select new Robot(x)).ToArray();
                 ball = new Ball(obj.Ball);
                 tick = obj.Tick;
             }
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 5)]
-            public Robot[] ourRobots;
+            public Robot[] SelfRobots;
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 5)]
             public Robot[] opponentRobots;
             public Ball ball;

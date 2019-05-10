@@ -116,7 +116,7 @@ namespace V5DLLAdapter
                         var args = new Native.JudgeResultEvent
                         {
                             type = arguments.JudgeResult.Type,
-                            actor = arguments.JudgeResult.Actor,
+                            offensiveTeam = arguments.JudgeResult.OffensiveTeam,
                             reason = arguments.JudgeResult.Reason
                         };
                         var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(args));
@@ -152,7 +152,7 @@ namespace V5DLLAdapter
             }
             var nativeField = new Native.Field(field);
             _getInstruction(ref nativeField);
-            return (from x in nativeField.ourRobots select (Wheel)x.wheel).ToArray();
+            return (from x in nativeField.SelfRobots select (Wheel)x.wheel).ToArray();
         }
 
         Placement IStrategy.GetPlacement(Field field)
@@ -166,7 +166,7 @@ namespace V5DLLAdapter
             return new Placement
             {
                 Ball = (Ball)nativeField.ball,
-                Robots = { from x in nativeField.ourRobots select (Robot)x }
+                Robots = { from x in nativeField.SelfRobots select (Robot)x }
             };
         }
     }
