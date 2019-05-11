@@ -6,7 +6,7 @@
         xmlns:System="clr-namespace:System;assembly=mscorlib"
         xmlns:local="clr-namespace:V5DLLAdapter"
         mc:Ignorable="d"
-        Title="V5DLLAdapter" Height="500" Width="650" MinHeight="200" MinWidth="265" Drop="Window_Drop" AllowDrop="True" SourceInitialized="Window_SourceInitialized">
+        Title="V5DLLAdapter" Height="500" Width="650" MinHeight="200" MinWidth="265" Drop="Window_Drop" AllowDrop="True" SourceInitialized="Window_SourceInitialized" Initialized="Window_Initialized">
     <Window.Resources>
         <ObjectDataProvider x:Key="logLevelsFromEnum" MethodName="GetValues"
                             ObjectType="{x:Type System:Enum}">
@@ -69,7 +69,7 @@
             <ItemsControl Name="logItems" ItemsSource="{Binding LogOutput, Mode=OneWay}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <TextBlock Text="{Binding Path=.}" Foreground="{Binding Path=Color}" FontFamily="Consolas" TextWrapping="Wrap" ContextMenuOpening="TextBlock_ContextMenuOpening" ContextMenuClosing="TextBlock_ContextMenuClosing">
+                        <TextBlock Text="{Binding Path=.}" Foreground="{Binding Path=Color}" FontFamily="Consolas, Microsoft YaHei" TextWrapping="Wrap" ContextMenuOpening="TextBlock_ContextMenuOpening" ContextMenuClosing="TextBlock_ContextMenuClosing">
                             <TextBlock.ContextMenu>
                                 <ContextMenu>
                                     <MenuItem Header="复制" Click="MenuItem_Click" CommandParameter="copyItem" />

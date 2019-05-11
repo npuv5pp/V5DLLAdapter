@@ -13,5 +13,11 @@ namespace V5DLLAdapter
     /// </summary>
     public partial class App : Application
     {
+        public string[] Args { get; set; }
+
+        private void Application_Startup(object sender, StartupEventArgs e)
+        {
+            Args = e.Args;
+        }
     }
 }

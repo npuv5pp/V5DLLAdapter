@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -103,6 +104,7 @@ namespace V5DLLAdapter
             Unload();
         }
 
+        [HandleProcessCorruptedStateExceptions]
         void IStrategy.OnEvent(EventType type, EventArguments arguments)
         {
             if (_getTeamInfo == null)
@@ -121,15 +123,26 @@ namespace V5DLLAdapter
                         };
                         var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(args));
                         Marshal.StructureToPtr(args, ptr, false);
-                        _onEvent(type, ptr);
-                        Marshal.DestroyStructure<Native.JudgeResultEvent>(ptr);
-                        Marshal.FreeHGlobal(ptr);
+                        try
+                        {
+                            _onEvent(type, ptr);
+                        }
+                        catch (Exception e)
+                        {
+                            throw new DLLException("OnEvent", e);
+                        }
+                        finally
+                        {
+                            Marshal.DestroyStructure<Native.JudgeResultEvent>(ptr);
+                            Marshal.FreeHGlobal(ptr);
+                        }
                     }
                     return;
             }
             _onEvent(type, IntPtr.Zero);
         }
 
+        [HandleProcessCorruptedStateExceptions]
         TeamInfo IStrategy.GetTeamInfo()
         {
             if (_getTeamInfo == null)
@@ -137,7 +150,14 @@ namespace V5DLLAdapter
                 throw new DllNotFoundException();
             }
             var teamInfo = new Native.TeamInfo();
-            _getTeamInfo(ref teamInfo);
+            try
+            {
+                _getTeamInfo(ref teamInfo);
+            }
+            catch (Exception e)
+            {
+                throw new DLLException("GetTeamInfo", e);
+            }
             return new TeamInfo
             {
                 TeamName = teamInfo.teamName
@@ -151,7 +171,14 @@ namespace V5DLLAdapter
                 throw new DllNotFoundException();
             }
             var nativeField = new Native.Field(field);
-            _getInstruction(ref nativeField);
+            try
+            {
+                _getInstruction(ref nativeField);
+            }
+            catch (Exception e)
+            {
+                throw new DLLException("GetInstruction", e);
+            }
             return (from x in nativeField.SelfRobots select (Wheel)x.wheel).ToArray();
         }
 
@@ -162,7 +189,14 @@ namespace V5DLLAdapter
                 throw new DllNotFoundException();
             }
             var nativeField = new Native.Field(field);
-            _getPlacement(ref nativeField);
+            try
+            {
+                _getPlacement(ref nativeField);
+            }
+            catch (Exception e)
+            {
+                throw new DLLException("GetPlacement", e);
+            }
             return new Placement
             {
                 Ball = (Ball)nativeField.ball,
@@ -170,4 +204,18 @@ namespace V5DLLAdapter
             };
         }
     }
+
+    class DLLException : Exception
+    {
+        string _functionName;
+        public override string Message { get { return $"在 DLL 导出的函数 {_functionName} 中发生异常"; } }
+        public Exception MaskedInnerException { get; }
+
+        public DLLException(string functionName, Exception maskedInnerException)
+        {
+            _functionName = functionName;
+            MaskedInnerException = maskedInnerException;
+        }
+    }
+
 }

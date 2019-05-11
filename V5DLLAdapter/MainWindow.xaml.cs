@@ -31,18 +31,19 @@ namespace V5DLLAdapter
         StrategyDLL dll = new StrategyDLL();
         StrategyServer server = null;
         ConsoleRedirectWriter consoleRedirectWriter = new ConsoleRedirectWriter();
+        bool corruptedState = false;
 
         int _port = 5555;
         public int Port
         {
             get => _port;
-            set { _port = value; notify("Path"); }
+            set { _port = value; Notify("Path"); }
         }
         string _path = "";
         public string Path
         {
             get => _path;
-            set { _path = value; notify("Path"); }
+            set { _path = value; Notify("Path"); }
         }
         public bool IsRunning => dll.IsLoaded && server != null;
 
@@ -94,18 +95,18 @@ namespace V5DLLAdapter
         public ObservableCollection<LogEntry> LogOutput
         {
             get => _logOutput;
-            set { _logOutput = value; notify("LogOutput"); }
+            set { _logOutput = value; Notify("LogOutput"); }
         }
 
         Severity _logLevel = Severity.Info;
-        public Severity LogLevel { get => _logLevel; set { _logLevel = value; notify("LogLevel"); } }
+        public Severity LogLevel { get => _logLevel; set { _logLevel = value; Notify("LogLevel"); } }
 
         string _logFilterKeyword = "";
-        public string LogFilterKeyword { get => _logFilterKeyword; set { _logFilterKeyword = value; notify("LogFilterKeyword"); } }
+        public string LogFilterKeyword { get => _logFilterKeyword; set { _logFilterKeyword = value; Notify("LogFilterKeyword"); } }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public void notify(string propertyName)
+        public void Notify(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
@@ -115,7 +116,7 @@ namespace V5DLLAdapter
             InitializeComponent();
             DataContext = this;
             PropertyChanged += OnPropertyChanged;
-            notify("IsRunning");
+            Notify("IsRunning");
             consoleRedirectWriter.OnWrite += (string text) =>
             {
                 Dispatcher.Invoke(() =>
@@ -147,7 +148,22 @@ namespace V5DLLAdapter
                     try
                     {
                         server = new StrategyServer(Port, dll);
-                        Task.Run(server.Run);
+                        Task.Run(() =>
+                        {
+                            try
+                            {
+                                server.Run();
+                            }
+                            catch (DLLException e)
+                            {
+                                Dispatcher.Invoke(() =>
+                                {
+                                    corruptedState = true;
+                                    Log(e.Message + Environment.NewLine + e.MaskedInnerException.ToString(), severity: Severity.Error);
+                                    Stop();
+                                });
+                            }
+                        });
                         Log("策略服务器开始运行", severity: Severity.Info);
                     }
                     catch (Exception ex)
@@ -160,7 +176,7 @@ namespace V5DLLAdapter
                 {
                     Log($"无法加载指定的策略程序 {Path}", severity: Severity.Error);
                 }
-                notify("IsRunning");
+                Notify("IsRunning");
             }
         }
 
@@ -171,14 +187,31 @@ namespace V5DLLAdapter
                 server.Dispose();
                 server = null;
                 dll.Unload();
-                notify("IsRunning");
+                Notify("IsRunning");
                 Log("策略服务器已停止", severity: Severity.Info);
             }
         }
 
         private void StartStopBtn_Click(object sender, RoutedEventArgs e)
         {
-            if (IsRunning) { Stop(); } else { Start(); }
+            if (IsRunning)
+            {
+                Stop();
+            }
+            else
+            {
+                if (corruptedState)
+                {
+                    var result = MessageBox.Show(
+                        $"此前的本机代码出现过错误，继续运行可能导致未知的问题。{Environment.NewLine}仍然要继续吗？",
+                        null, MessageBoxButton.YesNo, MessageBoxImage.Exclamation, MessageBoxResult.No);
+                    if (result != MessageBoxResult.Yes)
+                    {
+                        return;
+                    }
+                }
+                Start();
+            }
         }
 
         private void UpdateTitle()
@@ -450,6 +483,29 @@ namespace V5DLLAdapter
             else
             {
                 Log(rawText, tag: "CopyData");
+            }
+        }
+
+        private void Window_Initialized(object sender, EventArgs e)
+        {
+            var app = Application.Current as App;
+            var iter = app.Args.GetEnumerator();
+            while (iter.MoveNext())
+            {
+                switch ((iter.Current as string).ToLowerInvariant())
+                {
+                    case "-file":
+                        {
+                            if (!iter.MoveNext())
+                            {
+                                Log("-File 选项缺少参数", severity: Severity.Error);
+                                continue;
+                            }
+                            Path = iter.Current as string;
+                            startStopBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                        }
+                        break;
+                }
             }
         }
     }
