@@ -37,7 +37,7 @@ namespace V5DLLAdapter
         public int Port
         {
             get => _port;
-            set { _port = value; Notify("Path"); }
+            set { _port = value; Notify("Port"); }
         }
         string _path = "";
         public string Path
@@ -490,6 +490,7 @@ namespace V5DLLAdapter
         {
             var app = Application.Current as App;
             var iter = app.Args.GetEnumerator();
+            bool start = false;
             while (iter.MoveNext())
             {
                 switch ((iter.Current as string).ToLowerInvariant())
@@ -502,10 +503,33 @@ namespace V5DLLAdapter
                                 continue;
                             }
                             Path = iter.Current as string;
-                            startStopBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                        }
+                        break;
+                    case "-port":
+                        {
+                            if (!iter.MoveNext())
+                            {
+                                Log("-Port 选项缺少参数", severity: Severity.Error);
+                                continue;
+                            }
+                            if (!ushort.TryParse(iter.Current as string, out ushort port))
+                            {
+                                Log("-Port 选项的参数必须是有效的端口号", severity: Severity.Error);
+                                continue;
+                            }
+                            Port = port;
+                        }
+                        break;
+                    case "-start":
+                        {
+                            start = true;
                         }
                         break;
                 }
+            }
+            if (start)
+            {
+                startStopBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             }
         }
     }
