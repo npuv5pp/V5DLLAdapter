@@ -203,6 +203,20 @@ namespace V5DLLAdapter
                 Robots = { from x in nativeField.SelfRobots select (Robot)x }
             };
         }
+
+        private List<VariableEntry> variableList = new List<VariableEntry>();
+
+        public void SaveVariable(string key, string value)
+        {
+            variableList.Add(new VariableEntry { Key = key, Value = value });
+        }
+
+        VariableEntry[] IStrategy.GetVariables()
+        {
+            var rv = variableList.ToArray();
+            variableList.Clear();
+            return rv;
+        }
     }
 
     class DLLException : Exception

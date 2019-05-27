@@ -478,12 +478,34 @@ namespace V5DLLAdapter
                     case "W": severity = Severity.Warning; break;
                     case "E": severity = Severity.Error; break;
                 }
+                // e.g. "V/Variable:Key=Value"
+                if (tag == "Variable")
+                {
+                    SaveVariable(message);
+                }
                 Log(message, tag, severity);
             }
             else
             {
                 Log(rawText, tag: "CopyData");
             }
+        }
+
+        private void SaveVariable(string kv)
+        {
+            string key, value;
+            int split = kv.IndexOf('=');
+            if (split != -1)
+            {
+                key = kv.Substring(0, split);
+                value = kv.Substring(split + 1);
+            }
+            else
+            {
+                key = kv;
+                value = "";
+            }
+            dll.SaveVariable(key, value);
         }
 
         private void Window_Initialized(object sender, EventArgs e)
