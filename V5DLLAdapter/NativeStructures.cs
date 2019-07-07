@@ -117,5 +117,99 @@ namespace V5DLLAdapter
             public Ball ball;
             public int tick;
         }
+
+        namespace Legacy
+        {
+            struct Vector3
+            {
+                public float x;
+                public float y;
+                public float z;
+
+                private const double Inch2Cm = 2.54;
+                private const double Cm2Inch = 1 / Inch2Cm;
+
+                private const double MIDX = 50.1189; // 球场中点x坐标
+                private const double MIDY = 41.8061; // 球场中点y坐标
+
+                public Vector3(V5RPC.Proto.Vector2 obj)
+                {
+                    x = (float)(obj.X * Cm2Inch + MIDX);
+                    y = (float)(obj.Y * Cm2Inch + MIDY);
+                    z = 0;
+                }
+
+                public static Vector2 LegacyToProto(Vector3 vector)
+                {
+                    return new Vector2
+                    {
+                        x = (float)((vector.x - MIDX) * Inch2Cm),
+                        y = (float)((vector.y - MIDY) * Inch2Cm),
+                    };
+                }
+            }
+
+            struct Robot
+            {
+                public Robot(V5RPC.Proto.Robot obj)
+                {
+                    Position = new Vector3(obj.Position);
+                    Rotation = obj.Rotation;
+                    Wheel = new Wheel(obj.Wheel);
+                }
+                public Legacy.Vector3 Position;
+                public float Rotation;
+                public Wheel Wheel;
+            }
+
+            struct Ball
+            {
+                public Legacy.Vector3 Position;
+            }
+
+            struct Bounds
+            {
+                public long Left, Right, Top, Bottom;
+            }
+
+            struct Environment
+            {
+                [MarshalAs(UnmanagedType.ByValArray, SizeConst = 5)]
+                public Legacy.Robot[] SelfRobots;
+                [MarshalAs(UnmanagedType.ByValArray, SizeConst = 5)]
+                public Legacy.Robot[] OpponentRobots;
+                public Legacy.Ball CurrentBall, LastBall, PredictedBall;
+                public Legacy.Bounds FieldBounds, GoalBounds;
+                public int GameState;
+                public int WhosBall;
+                public IntPtr UserData;
+
+                public Environment(
+                    V5RPC.Proto.Field field,
+                    V5RPC.Proto.Team whosball,
+                    V5RPC.Proto.JudgeResultEvent.Types.ResultType gamestate)
+                {
+                    WhosBall = (int)whosball;
+                    GameState = (int)gamestate;
+                    SelfRobots = new Legacy.Robot[5];
+                    OpponentRobots = new Legacy.Robot[5];
+                    for (int i = 0; i < 5; i++)
+                    {
+                        SelfRobots[i] = new Legacy.Robot(field.SelfRobots[i]);
+                        OpponentRobots[i] = new Legacy.Robot(field.OpponentRobots[i]);
+                    }
+                    CurrentBall = new Legacy.Ball() { Position = new Legacy.Vector3(field.Ball.Position) };
+
+                    UserData = IntPtr.Zero;
+
+                    // Useless field, just become 0
+                    LastBall = new Legacy.Ball();
+                    PredictedBall = new Legacy.Ball();
+                    FieldBounds = new Legacy.Bounds();
+                    GoalBounds = new Legacy.Bounds();
+                }
+
+            }
+        }
     }
 }

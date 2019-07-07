@@ -10,16 +10,50 @@ using V5RPC.Proto;
 
 namespace V5DLLAdapter
 {
-    class StrategyDLL : IStrategy, IDisposable
+    abstract class StrategyDllBase : IDisposable, IStrategy
     {
-        [DllImport("kernel32.dll")]
-        static extern IntPtr LoadLibrary(string lpLibFileName);
-        [DllImport("kernel32.dll")]
-        static extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
-        [DllImport("kernel32.dll")]
-        static extern bool FreeLibrary(IntPtr hLibModule);
+        protected IntPtr currentModule = IntPtr.Zero;
+        public bool IsLoaded => currentModule != IntPtr.Zero;
 
-        //BEGIN UNMANAGED FUNCTIONS
+        [DllImport("kernel32.dll")]
+        static protected extern IntPtr LoadLibrary(string lpLibFileName);
+        [DllImport("kernel32.dll")]
+        static protected extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
+        [DllImport("kernel32.dll")]
+        static protected extern bool FreeLibrary(IntPtr hLibModule);
+
+        protected DT LoadFunction<DT>(string funcName) where DT : Delegate
+        {
+            var ptr = GetProcAddress(currentModule, funcName);
+            return (DT)Marshal.GetDelegateForFunctionPointer(ptr, typeof(DT));
+        }
+
+        public abstract string DLL { get; }
+
+        public abstract bool Load(string dllPath);
+        public virtual void Unload()
+        {
+            if (IsLoaded)
+            {
+                FreeLibrary(currentModule);
+            }
+            currentModule = IntPtr.Zero;
+        }
+
+        public void Dispose()
+        {
+            Unload();
+        }
+
+        public abstract void OnEvent(EventType type, EventArguments arguments);
+        public abstract TeamInfo GetTeamInfo();
+        public abstract Wheel[] GetInstruction(Field field);
+        public abstract Placement GetPlacement(Field field);
+    }
+
+    class StrategyDLL : StrategyDllBase
+    {
+        #region UNMANAGED FUNCTIONS
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate void GetTeamInfoDelegate(ref Native.TeamInfo teamInfo);
         GetTeamInfoDelegate _getTeamInfo;
@@ -35,12 +69,10 @@ namespace V5DLLAdapter
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate void GetPlacementDelegate(ref Native.Field field);
         GetPlacementDelegate _getPlacement;
-        //END UNMANAGED FUNCTIONS
+        #endregion
 
-        IntPtr currentModule = IntPtr.Zero;
-        public bool IsLoaded { get { return currentModule != IntPtr.Zero; } }
         string _lastDllPath = null;
-        public string DLL { get { return IsLoaded ? _lastDllPath : null; } }
+        public override string DLL => IsLoaded ? _lastDllPath : null;
 
         public const int MAX_STRING_LEN = 128;
 
@@ -48,13 +80,7 @@ namespace V5DLLAdapter
         {
         }
 
-        private DT LoadFunction<DT>(string funcName) where DT : Delegate
-        {
-            var ptr = GetProcAddress(currentModule, funcName);
-            return (DT)Marshal.GetDelegateForFunctionPointer(ptr, typeof(DT));
-        }
-
-        public bool Load(string dllPath)
+        public override bool Load(string dllPath)
         {
             if (IsLoaded)
             {
@@ -84,13 +110,9 @@ namespace V5DLLAdapter
             return true;
         }
 
-        public void Unload()
+        public override void Unload()
         {
-            if (IsLoaded)
-            {
-                FreeLibrary(currentModule);
-            }
-            currentModule = IntPtr.Zero;
+            base.Unload();
             //BEGIN UNMANAGED FUNCTIONS
             _getTeamInfo = null;
             _onEvent = null;
@@ -99,13 +121,8 @@ namespace V5DLLAdapter
             //END UNMANAGED FUNCTIONS
         }
 
-        public void Dispose()
-        {
-            Unload();
-        }
-
         [HandleProcessCorruptedStateExceptions]
-        void IStrategy.OnEvent(EventType type, EventArguments arguments)
+        public override void OnEvent(EventType type, EventArguments arguments)
         {
             if (_getTeamInfo == null)
             {
@@ -143,7 +160,7 @@ namespace V5DLLAdapter
         }
 
         [HandleProcessCorruptedStateExceptions]
-        TeamInfo IStrategy.GetTeamInfo()
+        public override TeamInfo GetTeamInfo()
         {
             if (_getTeamInfo == null)
             {
@@ -164,7 +181,7 @@ namespace V5DLLAdapter
             };
         }
 
-        Wheel[] IStrategy.GetInstruction(Field field)
+        public override Wheel[] GetInstruction(Field field)
         {
             if (_getInstruction == null)
             {
@@ -182,7 +199,7 @@ namespace V5DLLAdapter
             return (from x in nativeField.SelfRobots select (Wheel)x.wheel).ToArray();
         }
 
-        Placement IStrategy.GetPlacement(Field field)
+        public override Placement GetPlacement(Field field)
         {
             if (_getPlacement == null)
             {
@@ -202,6 +219,114 @@ namespace V5DLLAdapter
                 Ball = (Ball)nativeField.ball,
                 Robots = { from x in nativeField.SelfRobots select (Robot)x }
             };
+        }
+    }
+
+    /// <summary>
+    /// 兼容老的 DLL
+    /// </summary>
+    class LegacyDll : StrategyDllBase
+    {
+        #region UNMANAGED FUNCTIONS
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        delegate void LegacyStrategyDelegate(ref Native.Legacy.Environment environment);
+
+        LegacyStrategyDelegate _create;
+        LegacyStrategyDelegate _strategy;
+        LegacyStrategyDelegate _destroy;
+        #endregion
+
+        string _lastDllPath = null;
+        public override string DLL => IsLoaded ? _lastDllPath : null;
+
+        public override bool Load(string dllPath)
+        {
+            if (IsLoaded)
+            {
+                return false;
+            }
+            _lastDllPath = dllPath;
+            var hModule = LoadLibrary(dllPath);
+            if (hModule == IntPtr.Zero)
+            {
+                return false;
+            }
+            currentModule = hModule;
+            try
+            {
+                //BEGIN UNMANAGED FUNCTIONS
+                _create = LoadFunction<LegacyStrategyDelegate>("Create");
+                _strategy = LoadFunction<LegacyStrategyDelegate>("Strategy");
+                _destroy = LoadFunction<LegacyStrategyDelegate>("Destroy");
+                //END UNMANAGED FUNCTIONS
+            }
+            catch
+            {
+                Unload();
+                return false;
+            }
+
+            var env = new Native.Legacy.Environment();
+            _create?.Invoke(ref env);
+            return true;
+        }
+
+        public override void Unload()
+        {
+            var env = new Native.Legacy.Environment();
+            _destroy?.Invoke(ref env);
+
+            base.Unload();
+
+            _create = null;
+            _strategy = null;
+            _destroy = null;
+        }
+
+        JudgeResultEvent.Types.ResultType gameState = JudgeResultEvent.Types.ResultType.PlaceKick;
+        Team whosball = Team.Nobody;
+
+        public override Wheel[] GetInstruction(Field field)
+        {
+            if (_strategy == null)
+            {
+                throw new DllNotFoundException();
+            }
+            var env = new Native.Legacy.Environment(field, whosball, gameState);
+            try
+            {
+                _strategy(ref env);
+            }
+            catch (Exception e)
+            {
+                throw new DLLException("Strategy", e);
+            }
+            return env.SelfRobots.Select(x => x.Wheel).Cast<Wheel>().ToArray();
+        }
+
+        public override Placement GetPlacement(Field field)
+        {
+            // 返回一个空的摆位，依赖平台的修正功能
+            return new Placement();
+        }
+
+        [HandleProcessCorruptedStateExceptions]
+        public override TeamInfo GetTeamInfo()
+        {
+            return new TeamInfo { TeamName = "Legacy DLL" };
+        }
+
+        [HandleProcessCorruptedStateExceptions]
+        public override void OnEvent(EventType type, EventArguments arguments)
+        {
+            switch (type)
+            {
+                case EventType.JudgeResult:
+                    var judgeResult = arguments.JudgeResult;
+                    gameState = judgeResult.Type;
+                    whosball = judgeResult.OffensiveTeam;
+                    break;
+            }
         }
     }
 

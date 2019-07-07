@@ -28,7 +28,7 @@ namespace V5DLLAdapter
     /// 
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        StrategyDLL dll = new StrategyDLL();
+        StrategyDllBase dll;
         StrategyServer server = null;
         ConsoleRedirectWriter consoleRedirectWriter = new ConsoleRedirectWriter();
         bool corruptedState = false;
@@ -142,39 +142,47 @@ namespace V5DLLAdapter
         {
             if (!IsRunning)
             {
-                if (dll.Load(Path))
+                dll = new StrategyDLL();
+                if (!dll.Load(Path))
                 {
-                    Log($"已加载策略程序 {Path}", severity: Severity.Verbose);
-                    try
+                    dll = new LegacyDll();
+                    if (dll.Load(Path))
                     {
-                        server = new StrategyServer(Port, dll);
-                        Task.Run(() =>
-                        {
-                            try
-                            {
-                                server.Run();
-                            }
-                            catch (DLLException e)
-                            {
-                                Dispatcher.Invoke(() =>
-                                {
-                                    corruptedState = true;
-                                    Log(e.Message + Environment.NewLine + e.MaskedInnerException.ToString(), severity: Severity.Error);
-                                    Stop();
-                                });
-                            }
-                        });
-                        Log("策略服务器开始运行", severity: Severity.Info);
+                        Log("采用兼容模式", severity: Severity.Warning);
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        Log(ex.Message, severity: Severity.Error);
-                        dll.Unload();
+                        Log($"无法加载指定的策略程序 {Path}", severity: Severity.Error);
+                        Notify("IsRunning");
+                        return;
                     }
                 }
-                else
+                Log($"已加载策略程序 {Path}", severity: Severity.Verbose);
+                try
                 {
-                    Log($"无法加载指定的策略程序 {Path}", severity: Severity.Error);
+                    server = new StrategyServer(Port, dll);
+                    Task.Run(() =>
+                    {
+                        try
+                        {
+                            server.Run();
+                        }
+                        catch (DLLException e)
+                        {
+                            Dispatcher.Invoke(() =>
+                            {
+                                corruptedState = true;
+                                Log(e.Message + Environment.NewLine + e.MaskedInnerException.ToString(), severity: Severity.Error);
+                                Stop();
+                            });
+                        }
+                    });
+                    Log("策略服务器开始运行", severity: Severity.Info);
+                }
+                catch (Exception ex)
+                {
+                    Log(ex.Message, severity: Severity.Error);
+                    dll.Unload();
                 }
                 Notify("IsRunning");
             }
