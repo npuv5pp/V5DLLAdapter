@@ -301,22 +301,31 @@ namespace V5DLLAdapter
             {
                 throw new DLLException("Strategy", e);
             }
-            return env.SelfRobots.Select(x => x.Wheel).Cast<Wheel>().ToArray();
+            return env.SelfRobots.Select(x => (Wheel)x.Wheel).ToArray();
         }
 
         public override Placement GetPlacement(Field field)
         {
-            // 返回一个空的摆位，依赖平台的修正功能
-            return new Placement();
+            var placement = new Placement
+            {
+                Ball = new Ball {Position = new Vector2 {X = 50, Y = (float) 41.5}},
+                Robots =
+                {
+                    new Robot {Position = new Vector2 {X = (float) 90.5, Y = 42}, Wheel = new Wheel()},
+                    new Robot {Position = new Vector2 {X = 81, Y = 23}, Wheel = new Wheel()},
+                    new Robot {Position = new Vector2 {X = 81, Y = 61}, Wheel = new Wheel()},
+                    new Robot {Position = new Vector2 {X = 62, Y = 23}, Wheel = new Wheel()},
+                    new Robot {Position = new Vector2 {X = 62, Y = 61}, Wheel = new Wheel()},
+                }
+            };
+            return placement;
         }
 
-        [HandleProcessCorruptedStateExceptions]
         public override TeamInfo GetTeamInfo()
         {
             return new TeamInfo { TeamName = "Legacy DLL" };
         }
 
-        [HandleProcessCorruptedStateExceptions]
         public override void OnEvent(EventType type, EventArguments arguments)
         {
             switch (type)

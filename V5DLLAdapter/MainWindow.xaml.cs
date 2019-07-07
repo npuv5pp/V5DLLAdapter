@@ -28,7 +28,7 @@ namespace V5DLLAdapter
     /// 
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        StrategyDllBase dll;
+        StrategyDllBase dll = new StrategyDLL();
         StrategyServer server = null;
         ConsoleRedirectWriter consoleRedirectWriter = new ConsoleRedirectWriter();
         bool corruptedState = false;
