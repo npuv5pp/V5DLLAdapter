@@ -238,6 +238,19 @@ namespace V5DLLAdapter
 
         string _lastDllPath = null;
         public override string DLL => IsLoaded ? _lastDllPath : null;
+        
+        private readonly Placement placement = new Placement
+        {
+            Ball = new Ball {Position = new Vector2 {X = 50, Y = (float) 41.5}},
+            Robots =
+            {
+                new Robot {Position = new Vector2 {X = (float) 90.5, Y = 42}, Wheel = new Wheel()},
+                new Robot {Position = new Vector2 {X = 81, Y = 23}, Wheel = new Wheel()},
+                new Robot {Position = new Vector2 {X = 81, Y = 61}, Wheel = new Wheel()},
+                new Robot {Position = new Vector2 {X = 62, Y = 23}, Wheel = new Wheel()},
+                new Robot {Position = new Vector2 {X = 62, Y = 61}, Wheel = new Wheel()},
+            }
+        };
 
         public override bool Load(string dllPath)
         {
@@ -266,7 +279,20 @@ namespace V5DLLAdapter
                 return false;
             }
 
-            var env = new Native.Legacy.Environment();
+            var env = new Native.Legacy.Environment()
+            {
+                
+                CurrentBall = new Native.Legacy.Ball {Position = new Native.Legacy.Vector3 {x = 50, y =  41.5}},
+                SelfRobots =
+                new [] {
+                    new Native.Legacy.Robot {Position = new Native.Legacy.Vector3 {x = 90.5, y = 42}},
+                    new Native.Legacy.Robot {Position = new Native.Legacy.Vector3 {x = 81, y = 23}},
+                    new Native.Legacy.Robot {Position = new Native.Legacy.Vector3 {x = 81, y = 61}},
+                    new Native.Legacy.Robot {Position = new Native.Legacy.Vector3 {x = 62, y = 23}},
+                    new Native.Legacy.Robot {Position = new Native.Legacy.Vector3 {x = 62, y = 61}},
+                }
+            };
+            
             _create?.Invoke(ref env);
             return true;
         }
@@ -301,23 +327,16 @@ namespace V5DLLAdapter
             {
                 throw new DLLException("Strategy", e);
             }
-            return env.SelfRobots.Select(x => (Wheel)x.Wheel).ToArray();
+
+            return env.SelfRobots.Select(x => new Wheel()
+            {
+                LeftSpeed = (float) x.VelocityLeft,
+                RightSpeed = (float) x.VelocityRight
+            }).ToArray();
         }
 
         public override Placement GetPlacement(Field field)
         {
-            var placement = new Placement
-            {
-                Ball = new Ball {Position = new Vector2 {X = 50, Y = (float) 41.5}},
-                Robots =
-                {
-                    new Robot {Position = new Vector2 {X = (float) 90.5, Y = 42}, Wheel = new Wheel()},
-                    new Robot {Position = new Vector2 {X = 81, Y = 23}, Wheel = new Wheel()},
-                    new Robot {Position = new Vector2 {X = 81, Y = 61}, Wheel = new Wheel()},
-                    new Robot {Position = new Vector2 {X = 62, Y = 23}, Wheel = new Wheel()},
-                    new Robot {Position = new Vector2 {X = 62, Y = 61}, Wheel = new Wheel()},
-                }
-            };
             return placement;
         }
 

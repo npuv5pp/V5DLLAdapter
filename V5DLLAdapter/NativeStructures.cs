@@ -122,9 +122,9 @@ namespace V5DLLAdapter
         {
             struct Vector3
             {
-                public float x;
-                public float y;
-                public float z;
+                public double x;
+                public double y;
+                public double z;
 
                 private const double Inch2Cm = 2.54;
                 private const double Cm2Inch = 1 / Inch2Cm;
@@ -134,8 +134,8 @@ namespace V5DLLAdapter
 
                 public Vector3(V5RPC.Proto.Vector2 obj)
                 {
-                    x = (float)(obj.X * Cm2Inch + MIDX);
-                    y = (float)(obj.Y * Cm2Inch + MIDY);
+                    x = obj.X * Cm2Inch + MIDX;
+                    y = obj.Y * Cm2Inch + MIDY;
                     z = 0;
                 }
 
@@ -155,11 +155,23 @@ namespace V5DLLAdapter
                 {
                     Position = new Vector3(obj.Position);
                     Rotation = obj.Rotation;
-                    Wheel = new Wheel(obj.Wheel);
+                    VelocityLeft = obj.Wheel.LeftSpeed;
+                    VelocityRight = obj.Wheel.RightSpeed;
                 }
                 public Legacy.Vector3 Position;
-                public float Rotation;
-                public Wheel Wheel;
+                public double Rotation;
+                public double VelocityLeft, VelocityRight;
+            }
+            
+            struct OpponentRobot
+            {
+                public OpponentRobot(V5RPC.Proto.Robot obj)
+                {
+                    Position = new Vector3(obj.Position);
+                    Rotation = obj.Rotation;
+                }
+                public Legacy.Vector3 Position;
+                public double Rotation;
             }
 
             struct Ball
@@ -169,7 +181,7 @@ namespace V5DLLAdapter
 
             struct Bounds
             {
-                public long Left, Right, Top, Bottom;
+                public int Left, Right, Top, Bottom;
             }
 
             struct Environment
@@ -177,7 +189,7 @@ namespace V5DLLAdapter
                 [MarshalAs(UnmanagedType.ByValArray, SizeConst = 5)]
                 public Legacy.Robot[] SelfRobots;
                 [MarshalAs(UnmanagedType.ByValArray, SizeConst = 5)]
-                public Legacy.Robot[] OpponentRobots;
+                public Legacy.OpponentRobot[] OpponentRobots;
                 public Legacy.Ball CurrentBall, LastBall, PredictedBall;
                 public Legacy.Bounds FieldBounds, GoalBounds;
                 public int GameState;
@@ -192,11 +204,11 @@ namespace V5DLLAdapter
                     WhosBall = (int)whosball;
                     GameState = (int)gamestate;
                     SelfRobots = new Legacy.Robot[5];
-                    OpponentRobots = new Legacy.Robot[5];
+                    OpponentRobots = new Legacy.OpponentRobot[5];
                     for (int i = 0; i < 5; i++)
                     {
                         SelfRobots[i] = new Legacy.Robot(field.SelfRobots[i]);
-                        OpponentRobots[i] = new Legacy.Robot(field.OpponentRobots[i]);
+                        OpponentRobots[i] = new Legacy.OpponentRobot(field.OpponentRobots[i]);
                     }
                     CurrentBall = new Legacy.Ball() { Position = new Legacy.Vector3(field.Ball.Position) };
 
@@ -208,7 +220,6 @@ namespace V5DLLAdapter
                     FieldBounds = new Legacy.Bounds();
                     GoalBounds = new Legacy.Bounds();
                 }
-
             }
         }
     }
