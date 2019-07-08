@@ -5,6 +5,7 @@ using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Documents;
 using V5RPC;
 using V5RPC.Proto;
 
@@ -12,32 +13,34 @@ namespace V5DLLAdapter
 {
     abstract class StrategyDllBase : IDisposable, IStrategy
     {
-        protected IntPtr currentModule = IntPtr.Zero;
-        public bool IsLoaded => currentModule != IntPtr.Zero;
+        protected IntPtr CurrentModule = IntPtr.Zero;
+        public bool IsLoaded => CurrentModule != IntPtr.Zero;
+
+        protected bool ReverseCoordinate = false;
 
         [DllImport("kernel32.dll")]
-        static protected extern IntPtr LoadLibrary(string lpLibFileName);
+        protected static extern IntPtr LoadLibrary(string lpLibFileName);
         [DllImport("kernel32.dll")]
-        static protected extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
+        private static extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
         [DllImport("kernel32.dll")]
-        static protected extern bool FreeLibrary(IntPtr hLibModule);
+        private static extern bool FreeLibrary(IntPtr hLibModule);
 
         protected DT LoadFunction<DT>(string funcName) where DT : Delegate
         {
-            var ptr = GetProcAddress(currentModule, funcName);
+            var ptr = GetProcAddress(CurrentModule, funcName);
             return (DT)Marshal.GetDelegateForFunctionPointer(ptr, typeof(DT));
         }
 
-        public abstract string DLL { get; }
+        public abstract string Dll { get; }
 
-        public abstract bool Load(string dllPath);
+        public abstract bool Load(string dllPath, bool reverse);
         public virtual void Unload()
         {
             if (IsLoaded)
             {
-                FreeLibrary(currentModule);
+                FreeLibrary(CurrentModule);
             }
-            currentModule = IntPtr.Zero;
+            CurrentModule = IntPtr.Zero;
         }
 
         public void Dispose()
@@ -51,7 +54,7 @@ namespace V5DLLAdapter
         public abstract Placement GetPlacement(Field field);
     }
 
-    class StrategyDLL : StrategyDllBase
+    class StrategyDll : StrategyDllBase
     {
         #region UNMANAGED FUNCTIONS
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -72,27 +75,29 @@ namespace V5DLLAdapter
         #endregion
 
         string _lastDllPath = null;
-        public override string DLL => IsLoaded ? _lastDllPath : null;
+        public override string Dll => IsLoaded ? _lastDllPath : null;
 
         public const int MAX_STRING_LEN = 128;
 
-        public StrategyDLL()
+        public StrategyDll()
         {
         }
 
-        public override bool Load(string dllPath)
+        public override bool Load(string dllPath, bool reverse)
         {
             if (IsLoaded)
             {
                 return false;
             }
+
+            ReverseCoordinate = reverse;
             _lastDllPath = dllPath;
             var hModule = LoadLibrary(dllPath);
             if (hModule == IntPtr.Zero)
             {
                 return false;
             }
-            currentModule = hModule;
+            CurrentModule = hModule;
             try
             {
                 //BEGIN UNMANAGED FUNCTIONS
@@ -187,7 +192,14 @@ namespace V5DLLAdapter
             {
                 throw new DllNotFoundException();
             }
+
+            // 将 Proto 的结构转为本地结构
             var nativeField = new Native.Field(field);
+            if (ReverseCoordinate)
+            {
+                // 翻转，获得黄方坐标
+                nativeField.Reverse();
+            }
             try
             {
                 _getInstruction(ref nativeField);
@@ -196,7 +208,7 @@ namespace V5DLLAdapter
             {
                 throw new DLLException("GetInstruction", e);
             }
-            return (from x in nativeField.SelfRobots select (Wheel)x.wheel).ToArray();
+            return nativeField.SelfRobots.Select(x => (Wheel) x.wheel).ToArray();
         }
 
         public override Placement GetPlacement(Field field)
@@ -206,6 +218,10 @@ namespace V5DLLAdapter
                 throw new DllNotFoundException();
             }
             var nativeField = new Native.Field(field);
+            if (ReverseCoordinate)
+            {
+                nativeField.Reverse();
+            }
             try
             {
                 _getPlacement(ref nativeField);
@@ -217,7 +233,11 @@ namespace V5DLLAdapter
             return new Placement
             {
                 Ball = (Ball)nativeField.ball,
-                Robots = { from x in nativeField.SelfRobots select (Robot)x }
+                Robots =
+                {
+                    from x in nativeField.SelfRobots
+                    select (Robot)(ReverseCoordinate ? x.Reverse() : x)
+                }
             };
         }
     }
@@ -237,7 +257,7 @@ namespace V5DLLAdapter
         #endregion
 
         string _lastDllPath = null;
-        public override string DLL => IsLoaded ? _lastDllPath : null;
+        public override string Dll => IsLoaded ? _lastDllPath : null;
         
         private readonly Placement placement = new Placement
         {
@@ -252,19 +272,21 @@ namespace V5DLLAdapter
             }
         };
 
-        public override bool Load(string dllPath)
+        public override bool Load(string dllPath, bool reverse)
         {
             if (IsLoaded)
             {
                 return false;
             }
+            
+            ReverseCoordinate = reverse;
             _lastDllPath = dllPath;
             var hModule = LoadLibrary(dllPath);
             if (hModule == IntPtr.Zero)
             {
                 return false;
             }
-            currentModule = hModule;
+            CurrentModule = hModule;
             try
             {
                 //BEGIN UNMANAGED FUNCTIONS
@@ -318,7 +340,13 @@ namespace V5DLLAdapter
             {
                 throw new DllNotFoundException();
             }
-            var env = new Native.Legacy.Environment(field, whosball, gameState);
+
+            var nativeField = new Native.Field(field);
+            if (ReverseCoordinate)
+            {
+                nativeField.Reverse();
+            }
+            var env = new Native.Legacy.Environment(nativeField, whosball, gameState);
             try
             {
                 _strategy(ref env);
@@ -358,6 +386,7 @@ namespace V5DLLAdapter
         }
     }
 
+    [Serializable]
     class DLLException : Exception
     {
         string _functionName;

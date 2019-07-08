@@ -26,9 +26,9 @@ namespace V5DLLAdapter
     /// MainWindow.xaml 的交互逻辑
     /// </summary>
     /// 
-    public partial class MainWindow : Window, INotifyPropertyChanged
+    public partial class MainWindow : INotifyPropertyChanged, IDisposable
     {
-        StrategyDllBase dll = new StrategyDLL();
+        StrategyDllBase dll = new StrategyDll();
         StrategyServer server = null;
         ConsoleRedirectWriter consoleRedirectWriter = new ConsoleRedirectWriter();
         bool corruptedState = false;
@@ -37,14 +37,22 @@ namespace V5DLLAdapter
         public int Port
         {
             get => _port;
-            set { _port = value; Notify("Port"); }
+            set { _port = value; Notify(nameof(Port)); }
         }
         string _path = "";
         public string Path
         {
             get => _path;
-            set { _path = value; Notify("Path"); }
+            set { _path = value; Notify(nameof(Path)); }
         }
+
+        private bool _reverseCoordinate = false;
+        public bool ReverseCoordinate
+        {
+            get => _reverseCoordinate;
+            set { _reverseCoordinate = value; Notify(nameof(ReverseCoordinate)); }
+        }
+
         public bool IsRunning => dll.IsLoaded && server != null;
 
         public readonly int MAX_LOG_ITEMS = 2000;
@@ -95,14 +103,14 @@ namespace V5DLLAdapter
         public ObservableCollection<LogEntry> LogOutput
         {
             get => _logOutput;
-            set { _logOutput = value; Notify("LogOutput"); }
+            set { _logOutput = value; Notify(nameof(LogOutput)); }
         }
 
         Severity _logLevel = Severity.Info;
-        public Severity LogLevel { get => _logLevel; set { _logLevel = value; Notify("LogLevel"); } }
+        public Severity LogLevel { get => _logLevel; set { _logLevel = value; Notify(nameof(LogLevel)); } }
 
         string _logFilterKeyword = "";
-        public string LogFilterKeyword { get => _logFilterKeyword; set { _logFilterKeyword = value; Notify("LogFilterKeyword"); } }
+        public string LogFilterKeyword { get => _logFilterKeyword; set { _logFilterKeyword = value; Notify(nameof(LogFilterKeyword)); } }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -116,7 +124,7 @@ namespace V5DLLAdapter
             InitializeComponent();
             DataContext = this;
             PropertyChanged += OnPropertyChanged;
-            Notify("IsRunning");
+            Notify(nameof(IsRunning));
             consoleRedirectWriter.OnWrite += (string text) =>
             {
                 Dispatcher.Invoke(() =>
@@ -129,7 +137,11 @@ namespace V5DLLAdapter
 
         void OnPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            filePathEdit.IsEnabled = browseBtn.IsEnabled = portEdit.IsEnabled = !IsRunning;
+            isYellowStrategy.IsEnabled
+                = filePathEdit.IsEnabled
+                = browseBtn.IsEnabled
+                = portEdit.IsEnabled = !IsRunning;
+            
             startStopBtn.Content = IsRunning ? "停止" : "启动";
             UpdateTitle();
             if (e.PropertyName == "LogFilterKeyword")
@@ -142,18 +154,18 @@ namespace V5DLLAdapter
         {
             if (!IsRunning)
             {
-                dll = new StrategyDLL();
-                if (!dll.Load(Path))
+                dll = new StrategyDll();
+                if (!dll.Load(Path, ReverseCoordinate))
                 {
                     dll = new LegacyDll();
-                    if (dll.Load(Path))
+                    if (dll.Load(Path, ReverseCoordinate))
                     {
                         Log("采用兼容模式", severity: Severity.Warning);
                     }
                     else
                     {
                         Log($"无法加载指定的策略程序 {Path}", severity: Severity.Error);
-                        Notify("IsRunning");
+                        Notify(nameof(IsRunning));
                         return;
                     }
                 }
@@ -184,7 +196,7 @@ namespace V5DLLAdapter
                     Log(ex.Message, severity: Severity.Error);
                     dll.Unload();
                 }
-                Notify("IsRunning");
+                Notify(nameof(IsRunning));
             }
         }
 
@@ -195,7 +207,7 @@ namespace V5DLLAdapter
                 server.Dispose();
                 server = null;
                 dll.Unload();
-                Notify("IsRunning");
+                Notify(nameof(IsRunning));
                 Log("策略服务器已停止", severity: Severity.Info);
             }
         }
@@ -224,14 +236,7 @@ namespace V5DLLAdapter
 
         private void UpdateTitle()
         {
-            if (IsRunning)
-            {
-                Title = $"V5DLLAdapter - {dll.DLL}";
-            }
-            else
-            {
-                Title = "V5DLLAdapter";
-            }
+            Title = IsRunning ? $"V5DLLAdapter - {dll.Dll}" : "V5DLLAdapter";
         }
 
         public void Log(string message, string tag = "V5DLLAdapter", Severity severity = Severity.Info)
@@ -413,11 +418,11 @@ namespace V5DLLAdapter
             var hWnd = PresentationSource.FromVisual(this) as HwndSource;
             hWnd.AddHook(WndProc);
             const int GWLP_USERDATA = -21;
-            SetWindowLong(hWnd.Handle, GWLP_USERDATA, new IntPtr(0x56352B2B));
+            SetWindowLong(hWnd.Handle, GWLP_USERDATA, 0x56352B2B);
         }
 
         [DllImport("user32.dll")]
-        private static extern IntPtr SetWindowLong(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+        private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
 
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
@@ -539,6 +544,13 @@ namespace V5DLLAdapter
             {
                 startStopBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             }
+        }
+
+        void IDisposable.Dispose()
+        {
+            dll?.Dispose();
+            server?.Dispose();
+            consoleRedirectWriter?.Dispose();
         }
     }
 

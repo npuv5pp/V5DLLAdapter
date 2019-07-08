@@ -3,13 +3,16 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:System="clr-namespace:System;assembly=mscorlib"
+        xmlns:system="clr-namespace:System;assembly=mscorlib"
         xmlns:local="clr-namespace:V5DLLAdapter"
         mc:Ignorable="d"
         Title="V5DLLAdapter" Height="500" Width="650" MinHeight="200" MinWidth="265" Drop="Window_Drop" AllowDrop="True" SourceInitialized="Window_SourceInitialized" Initialized="Window_Initialized">
+    <d:Window.DataContext>
+        <local:MainWindow />
+    </d:Window.DataContext>
     <Window.Resources>
         <ObjectDataProvider x:Key="logLevelsFromEnum" MethodName="GetValues"
-                            ObjectType="{x:Type System:Enum}">
+                            ObjectType="{x:Type system:Enum}">
             <ObjectDataProvider.MethodParameters>
                 <x:Type TypeName="local:Severity"/>
             </ObjectDataProvider.MethodParameters>
@@ -28,16 +31,17 @@
                 <ColumnDefinition Width="80"/>
             </Grid.ColumnDefinitions>
             <Label Content="策略文件" />
-            <TextBox x:Name="filePathEdit" Text="{Binding Path=Path}" Grid.Column="1" VerticalContentAlignment="Center" AllowDrop="True" PreviewDragOver="PreviewDragOver"/>
+            <DockPanel Grid.Column="1">
+                <CheckBox x:Name="isYellowStrategy" Content="黄方" IsChecked="{Binding ReverseCoordinate}" VerticalAlignment="Center" Margin="10,0,0,0" DockPanel.Dock="Right"/>
+                <TextBox x:Name="filePathEdit" Text="{Binding Path}" VerticalContentAlignment="Center" AllowDrop="True" PreviewDragOver="PreviewDragOver" d:LayoutOverrides="LeftPosition, RightPosition, TopPosition, BottomPosition"/>
+            </DockPanel>
             <Button x:Name="browseBtn" Content="浏览" Grid.Column="2" Click="BrowseBtn_Click" Margin="10,0,0,0"/>
             <Label Content="端口" Grid.Row="2"/>
             <DockPanel Grid.Row="2" Grid.Column="1">
-                <StackPanel Orientation="Horizontal" >
-                    <TextBox x:Name="portEdit" Text="{Binding Path=Port, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Width="50" MaxLength="5"/>
-                    <Button Name="TestBtn" Content="测试" Width="50" Margin="10,0,0,0" Click="TestBtn_Click"></Button>
-                    <Label Content="日志级别" Margin="10,0,0,0"/>
-                    <ComboBox x:Name="logLevelCombo" Width="80" ItemsSource="{Binding Source={StaticResource logLevelsFromEnum}}" SelectedItem="{Binding LogLevel, Mode=TwoWay}" SelectionChanged="LogLevelCombo_SelectionChanged" VerticalContentAlignment="Center" />
-                </StackPanel>
+                <TextBox x:Name="portEdit" Text="{Binding Path=Port, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Width="50" MaxLength="5"/>
+                <Button Name="TestBtn" Content="测试" Width="50" Margin="10,0,0,0" Click="TestBtn_Click"></Button>
+                <Label Content="日志级别" Margin="10,0,0,0"/>
+                <ComboBox x:Name="logLevelCombo" Width="80" ItemsSource="{Binding Source={StaticResource logLevelsFromEnum}}" SelectedItem="{Binding LogLevel, Mode=TwoWay}" SelectionChanged="LogLevelCombo_SelectionChanged" VerticalContentAlignment="Center" />
                 <TextBox x:Name="filterKeywordEdit" TextWrapping="Wrap" VerticalContentAlignment="Center" Margin="10,0,0,0" DockPanel.Dock="Right" Text="{Binding LogFilterKeyword, Mode=TwoWay}" KeyDown="FilterKeywordEdit_KeyDown">
                     <TextBox.Style>
                         <Style TargetType="TextBox">
@@ -49,7 +53,7 @@
                                 </VisualBrush>
                             </Style.Resources>
                             <Style.Triggers>
-                                <Trigger Property="Text" Value="{x:Static System:String.Empty}">
+                                <Trigger Property="Text" Value="{x:Static system:String.Empty}">
                                     <Setter Property="Background" Value="{StaticResource CueBannerBrush}" />
                                 </Trigger>
                                 <Trigger Property="Text" Value="{x:Null}">

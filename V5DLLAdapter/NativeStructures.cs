@@ -12,7 +12,7 @@ namespace V5DLLAdapter
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         struct TeamInfo
         {
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = StrategyDLL.MAX_STRING_LEN)]
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = StrategyDll.MAX_STRING_LEN)]
             public string teamName;
         }
 
@@ -21,7 +21,7 @@ namespace V5DLLAdapter
         {
             public V5RPC.Proto.JudgeResultEvent.Types.ResultType type;
             public V5RPC.Proto.Team offensiveTeam;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = StrategyDLL.MAX_STRING_LEN)]
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = StrategyDll.MAX_STRING_LEN)]
             public string reason;
         };
 
@@ -96,6 +96,21 @@ namespace V5DLLAdapter
                     Wheel = (V5RPC.Proto.Wheel)obj.wheel
                 };
             }
+
+            public Robot Reverse()
+            {
+                return new Robot
+                {
+                    position = new Vector2 { x = -position.x, y = -position.y },
+                    rotation = (float)FlipRotation(rotation),
+                    wheel = wheel,
+                };
+            }
+
+            public static double FlipRotation(double rotation)
+            {
+                return rotation >= 0 ? rotation - 180 : rotation + 180;
+            }
             public Vector2 position;
             public float rotation;
             public Wheel wheel;
@@ -103,19 +118,27 @@ namespace V5DLLAdapter
 
         struct Field
         {
-            public Field(V5RPC.Proto.Field obj)
-            {
-                SelfRobots = (from x in obj.SelfRobots select new Robot(x)).ToArray();
-                opponentRobots = (from x in obj.OpponentRobots select new Robot(x)).ToArray();
-                ball = new Ball(obj.Ball);
-                tick = obj.Tick;
-            }
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 5)]
             public Robot[] SelfRobots;
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 5)]
             public Robot[] opponentRobots;
             public Ball ball;
             public int tick;
+            
+            public Field(V5RPC.Proto.Field obj)
+            {
+                SelfRobots = obj.SelfRobots.Select(x => new Robot(x)).ToArray();
+                opponentRobots = obj.OpponentRobots.Select(x => new Robot(x)).ToArray();
+                ball = new Ball(obj.Ball);
+                tick = obj.Tick;
+            }
+
+            public void Reverse()
+            {
+                SelfRobots = SelfRobots.Select(x => x.Reverse()).ToArray();
+                opponentRobots = opponentRobots.Select(x => x.Reverse()).ToArray();
+                ball.position = new Vector2 {x = -ball.position.x, y = -ball.position.y};
+            }
         }
 
         namespace Legacy
@@ -132,10 +155,10 @@ namespace V5DLLAdapter
                 private const double MIDX = 50.1189; // 球场中点x坐标
                 private const double MIDY = 41.8061; // 球场中点y坐标
 
-                public Vector3(V5RPC.Proto.Vector2 obj)
+                public Vector3(Native.Vector2 obj)
                 {
-                    x = obj.X * Cm2Inch + MIDX;
-                    y = obj.Y * Cm2Inch + MIDY;
+                    x = obj.x * Cm2Inch + MIDX;
+                    y = obj.y * Cm2Inch + MIDY;
                     z = 0;
                 }
 
@@ -147,16 +170,21 @@ namespace V5DLLAdapter
                         y = (float)((vector.y - MIDY) * Inch2Cm),
                     };
                 }
+
+                public static Vector3 operator -(Vector3 vector)
+                {
+                    return new Vector3 { x = -vector.x, y = -vector.y, z = -vector.z};
+                }
             }
 
             struct Robot
             {
-                public Robot(V5RPC.Proto.Robot obj)
+                public Robot(Native.Robot obj)
                 {
-                    Position = new Vector3(obj.Position);
-                    Rotation = obj.Rotation;
-                    VelocityLeft = obj.Wheel.LeftSpeed;
-                    VelocityRight = obj.Wheel.RightSpeed;
+                    Position = new Vector3(obj.position);
+                    Rotation = obj.rotation;
+                    VelocityLeft = obj.wheel.leftSpeed;
+                    VelocityRight = obj.wheel.rightSpeed;
                 }
                 public Legacy.Vector3 Position;
                 public double Rotation;
@@ -165,10 +193,10 @@ namespace V5DLLAdapter
             
             struct OpponentRobot
             {
-                public OpponentRobot(V5RPC.Proto.Robot obj)
+                public OpponentRobot(Native.Robot obj)
                 {
-                    Position = new Vector3(obj.Position);
-                    Rotation = obj.Rotation;
+                    Position = new Vector3(obj.position);
+                    Rotation = obj.rotation;
                 }
                 public Legacy.Vector3 Position;
                 public double Rotation;
@@ -197,7 +225,7 @@ namespace V5DLLAdapter
                 public IntPtr UserData;
 
                 public Environment(
-                    V5RPC.Proto.Field field,
+                    Native.Field field,
                     V5RPC.Proto.Team whosball,
                     V5RPC.Proto.JudgeResultEvent.Types.ResultType gamestate)
                 {
@@ -208,9 +236,9 @@ namespace V5DLLAdapter
                     for (int i = 0; i < 5; i++)
                     {
                         SelfRobots[i] = new Legacy.Robot(field.SelfRobots[i]);
-                        OpponentRobots[i] = new Legacy.OpponentRobot(field.OpponentRobots[i]);
+                        OpponentRobots[i] = new Legacy.OpponentRobot(field.opponentRobots[i]);
                     }
-                    CurrentBall = new Legacy.Ball() { Position = new Legacy.Vector3(field.Ball.Position) };
+                    CurrentBall = new Legacy.Ball() { Position = new Legacy.Vector3(field.ball.position) };
 
                     UserData = IntPtr.Zero;
 
@@ -219,6 +247,19 @@ namespace V5DLLAdapter
                     PredictedBall = new Legacy.Ball();
                     FieldBounds = new Legacy.Bounds();
                     GoalBounds = new Legacy.Bounds();
+                }
+
+                public void Reverse()
+                {
+                    for (int i = 0; i < 5; i++)
+                    {
+                        SelfRobots[i].Position = -SelfRobots[i].Position;
+                        SelfRobots[i].Rotation = Native.Robot.FlipRotation(SelfRobots[i].Rotation);
+                        OpponentRobots[i].Position = -OpponentRobots[i].Position;
+                        OpponentRobots[i].Rotation = Native.Robot.FlipRotation(OpponentRobots[i].Rotation);
+                    }
+
+                    CurrentBall = new Ball {Position = -CurrentBall.Position};
                 }
             }
         }
