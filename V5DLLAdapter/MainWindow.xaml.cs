@@ -26,7 +26,7 @@ namespace V5DLLAdapter
     /// MainWindow.xaml 的交互逻辑
     /// </summary>
     /// 
-    public partial class MainWindow : INotifyPropertyChanged, IDisposable
+    public sealed partial class MainWindow : INotifyPropertyChanged, IDisposable
     {
         StrategyDllBase dll = new StrategyDll();
         StrategyServer server = null;
@@ -55,7 +55,7 @@ namespace V5DLLAdapter
 
         public bool IsRunning => dll.IsLoaded && server != null;
 
-        public readonly int MAX_LOG_ITEMS = 2000;
+        public const int MAX_LOG_ITEMS = 2000;
 
         public struct LogEntry
         {
@@ -99,12 +99,7 @@ namespace V5DLLAdapter
             }
         }
 
-        ObservableCollection<LogEntry> _logOutput = new ObservableCollection<LogEntry>();
-        public ObservableCollection<LogEntry> LogOutput
-        {
-            get => _logOutput;
-            set { _logOutput = value; Notify(nameof(LogOutput)); }
-        }
+        public ObservableCollection<LogEntry> LogOutput { get; } = new ObservableCollection<LogEntry>();
 
         Severity _logLevel = Severity.Info;
         public Severity LogLevel { get => _logLevel; set { _logLevel = value; Notify(nameof(LogLevel)); } }
@@ -179,7 +174,7 @@ namespace V5DLLAdapter
                         {
                             server.Run();
                         }
-                        catch (DLLException e)
+                        catch (DllException e)
                         {
                             Dispatcher.Invoke(() =>
                             {
@@ -546,7 +541,7 @@ namespace V5DLLAdapter
             }
         }
 
-        void IDisposable.Dispose()
+        public void Dispose()
         {
             dll?.Dispose();
             server?.Dispose();

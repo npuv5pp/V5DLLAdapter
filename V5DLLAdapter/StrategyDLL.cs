@@ -151,7 +151,7 @@ namespace V5DLLAdapter
                         }
                         catch (Exception e)
                         {
-                            throw new DLLException("OnEvent", e);
+                            throw new DllException("OnEvent", e);
                         }
                         finally
                         {
@@ -178,7 +178,7 @@ namespace V5DLLAdapter
             }
             catch (Exception e)
             {
-                throw new DLLException("GetTeamInfo", e);
+                throw new DllException("GetTeamInfo", e);
             }
             return new TeamInfo
             {
@@ -206,7 +206,7 @@ namespace V5DLLAdapter
             }
             catch (Exception e)
             {
-                throw new DLLException("GetInstruction", e);
+                throw new DllException("GetInstruction", e);
             }
             return nativeField.SelfRobots.Select(x => (Wheel) x.wheel).ToArray();
         }
@@ -228,7 +228,7 @@ namespace V5DLLAdapter
             }
             catch (Exception e)
             {
-                throw new DLLException("GetPlacement", e);
+                throw new DllException("GetPlacement", e);
             }
             return new Placement
             {
@@ -353,7 +353,7 @@ namespace V5DLLAdapter
             }
             catch (Exception e)
             {
-                throw new DLLException("Strategy", e);
+                throw new DllException("Strategy", e);
             }
 
             return env.SelfRobots.Select(x => new Wheel()
@@ -387,16 +387,24 @@ namespace V5DLLAdapter
     }
 
     [Serializable]
-    class DLLException : Exception
+    public class DllException : Exception
     {
         string _functionName;
         public override string Message { get { return $"在 DLL 导出的函数 {_functionName} 中发生异常"; } }
         public Exception MaskedInnerException { get; }
 
-        public DLLException(string functionName, Exception maskedInnerException)
+        public DllException(string functionName, Exception maskedInnerException)
         {
             _functionName = functionName;
             MaskedInnerException = maskedInnerException;
+        }
+
+        public DllException(string message) : base(message)
+        {
+        }
+
+        public DllException()
+        {
         }
     }
 
