@@ -232,7 +232,7 @@ namespace V5DLLAdapter
 
         private void UpdateTitle()
         {
-            Title = IsRunning ? $"V5DLLAdapter - {dll.Dll}" : "V5DLLAdapter";
+            Title = IsRunning ? $"V5DLLAdapter - {dll.Dll} : {Port}" : "V5DLLAdapter";
         }
 
         public void Log(string message, string tag = "V5DLLAdapter", Severity severity = Severity.Info)
