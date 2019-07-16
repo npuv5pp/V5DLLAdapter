@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -496,48 +497,52 @@ namespace V5DLLAdapter
 
         private void Window_Initialized(object sender, EventArgs e)
         {
-            var app = Application.Current as App;
-            var iter = app.Args.GetEnumerator();
-            bool start = false;
-            while (iter.MoveNext())
+            var app = (App) Application.Current;
+            using (var iterator = app.Args.AsEnumerable().GetEnumerator())
             {
-                switch ((iter.Current as string).ToLowerInvariant())
+                bool start = false;
+                while (iterator.MoveNext())
                 {
-                    case "-file":
-                        {
-                            if (!iter.MoveNext())
+                    switch (iterator.Current?.ToUpperInvariant())
+                    {
+                        case "-FILE":
+                            if (!iterator.MoveNext())
                             {
                                 Log("-File 选项缺少参数", severity: Severity.Error);
                                 continue;
                             }
-                            Path = iter.Current as string;
-                        }
-                        break;
-                    case "-port":
-                        {
-                            if (!iter.MoveNext())
+
+                            Path = iterator.Current;
+                            break;
+                        case "-PORT":
+                            if (!iterator.MoveNext())
                             {
                                 Log("-Port 选项缺少参数", severity: Severity.Error);
                                 continue;
                             }
-                            if (!ushort.TryParse(iter.Current as string, out ushort port))
+
+                            if (!ushort.TryParse(iterator.Current, out ushort port))
                             {
                                 Log("-Port 选项的参数必须是有效的端口号", severity: Severity.Error);
                                 continue;
                             }
+
                             Port = port;
-                        }
-                        break;
-                    case "-start":
-                        {
+                            break;
+                        
+                        case "-START":
                             start = true;
-                        }
-                        break;
+                            break;
+                        
+                        case "-YELLOW":
+                            ReverseCoordinate = true;
+                            break;
+                    }
                 }
-            }
-            if (start)
-            {
-                startStopBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                if (start)
+                {
+                    startStopBtn.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+                }
             }
         }
 
