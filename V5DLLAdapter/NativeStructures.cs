@@ -4,6 +4,8 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using V5RPC.Proto;
+using static V5RPC.Proto.JudgeResultEvent.Types;
 
 namespace V5DLLAdapter
 {
@@ -19,7 +21,7 @@ namespace V5DLLAdapter
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         struct JudgeResultEvent
         {
-            public V5RPC.Proto.JudgeResultEvent.Types.ResultType type;
+            public ResultType type;
             public V5RPC.Proto.Team offensiveTeam;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = StrategyDll.MAX_STRING_LEN)]
             public string reason;
@@ -224,13 +226,10 @@ namespace V5DLLAdapter
                 public int WhosBall;
                 public IntPtr UserData;
 
-                public Environment(
-                    Native.Field field,
-                    V5RPC.Proto.Team whosball,
-                    V5RPC.Proto.JudgeResultEvent.Types.ResultType gamestate)
+                public Environment(Native.Field field, V5RPC.Proto.Team whosball, ResultType gamestate)
                 {
-                    WhosBall = (int)whosball;
-                    GameState = (int)gamestate;
+                    WhosBall = ToLegacyWhosball(whosball);
+                    GameState = ToLegacyGameState(gamestate);
                     SelfRobots = new Legacy.Robot[5];
                     OpponentRobots = new Legacy.OpponentRobot[5];
                     for (int i = 0; i < 5; i++)
@@ -247,6 +246,41 @@ namespace V5DLLAdapter
                     PredictedBall = new Legacy.Ball();
                     FieldBounds = new Legacy.Bounds();
                     GoalBounds = new Legacy.Bounds();
+                }
+
+                private static int ToLegacyWhosball(V5RPC.Proto.Team whosball)
+                {
+                    switch (whosball)
+                    {
+                        case Team.Self:
+                            return 1;
+                        case Team.Opponent:
+                            return 2;
+                        case Team.Nobody:
+                            return 0;
+                        default:
+                            throw new ArgumentOutOfRangeException(nameof(whosball), whosball, null);
+                    }
+                }
+
+                private static int ToLegacyGameState(ResultType gamestate)
+                {
+                    switch (gamestate)
+                    {
+                        case ResultType.PlaceKick:
+                            return 2;
+                        case ResultType.GoalKick:
+                            return 5;
+                        case ResultType.PenaltyKick:
+                            return 3;
+                        case ResultType.FreeKickRightTop:
+                        case ResultType.FreeKickRightBot:
+                        case ResultType.FreeKickLeftTop:
+                        case ResultType.FreeKickLeftBot:
+                            return 1;
+                        default:
+                            throw new ArgumentOutOfRangeException(nameof(gamestate), gamestate, null);
+                    }
                 }
 
                 public void Reverse()
