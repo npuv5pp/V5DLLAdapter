@@ -241,6 +241,8 @@ namespace V5DLLAdapter
             {
                 LogOutput.RemoveAt(0);
             }
+            var border = (Border) VisualTreeHelper.GetChild(logItems, 0);
+            var logScroller = (ScrollViewer) VisualTreeHelper.GetChild(border, 0);
             bool scrollToEnd = logScroller.VerticalOffset == logScroller.ScrollableHeight;
             var entry = new LogEntry
             {
@@ -318,6 +320,10 @@ namespace V5DLLAdapter
             catch (Exception ex)
             {
                 Log(ex.Message, tag: "StrategyTest", severity: Severity.Error);
+            }
+            finally
+            {
+                client.Dispose();
             }
             if (client == null)
             {
