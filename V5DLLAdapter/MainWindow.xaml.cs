@@ -242,9 +242,20 @@ namespace V5DLLAdapter
             {
                 LogOutput.RemoveAt(0);
             }
-            var border = (Border) VisualTreeHelper.GetChild(logItems, 0);
-            var logScroller = (ScrollViewer) VisualTreeHelper.GetChild(border, 0);
-            bool scrollToEnd = logScroller.VerticalOffset == logScroller.ScrollableHeight;
+
+            bool scrollToEnd = false;
+            ScrollViewer logScroller = null;
+            try
+            {
+                var border = (Border) VisualTreeHelper.GetChild(logItems, 0);
+                logScroller = (ScrollViewer) VisualTreeHelper.GetChild(border, 0);
+                scrollToEnd = logScroller.VerticalOffset == logScroller.ScrollableHeight;
+            }
+            // 使用 -Start 参数启动时，视觉元素尚未初始化
+            catch (ArgumentOutOfRangeException)
+            {
+            }
+            
             var entry = new LogEntry
             {
                 dateTime = DateTime.Now,
