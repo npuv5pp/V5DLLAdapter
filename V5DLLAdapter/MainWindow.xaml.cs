@@ -391,27 +391,11 @@ namespace V5DLLAdapter
             }
         }
 
-        private void TextBlock_ContextMenuOpening(object sender, ContextMenuEventArgs e)
-        {
-            if (e.Source is TextBlock tb)
-            {
-                tb.Background = Brushes.MidnightBlue;
-            }
-        }
-
-        private void TextBlock_ContextMenuClosing(object sender, ContextMenuEventArgs e)
-        {
-            if (e.Source is TextBlock tb)
-            {
-                tb.Background = null;
-            }
-        }
-
         private void FilterKeywordEdit_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter && e.Source is TextBox tb)
             {
-                tb.GetBindingExpression(TextBox.TextProperty).UpdateSource();
+                tb.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
             }
         }
 
