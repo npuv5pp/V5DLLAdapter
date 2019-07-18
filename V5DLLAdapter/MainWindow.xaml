@@ -17,6 +17,14 @@
                 <x:Type TypeName="local:Severity"/>
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
+        <ContextMenu x:Key="CopyMenu">
+            <MenuItem Header="复制" Click="MenuItem_Click" CommandParameter="copyItem" />
+            <MenuItem Header="复制正文" Click="MenuItem_Click" CommandParameter="copyItemMessage" />
+            <Separator />
+            <MenuItem Header="复制所有日志" Click="MenuItem_Click"  CommandParameter="copyLog" />
+            <MenuItem Header="复制所有日志正文" Click="MenuItem_Click" CommandParameter="copyLogMessage" />
+            <MenuItem Header="清空日志" Click="MenuItem_Click" CommandParameter="clearLog" />
+        </ContextMenu>
     </Window.Resources>
     <DockPanel>
         <Grid Margin="20,20,20,20" VerticalAlignment="Top" DockPanel.Dock="Top">
@@ -74,23 +82,7 @@
                 <Style TargetType="ListBoxItem">
                     <Setter Property="Foreground" Value="{Binding Path=Color}" />
                     <Setter Property="FontFamily" Value="Consolas, Microsoft YaHei" />
-                    <Setter Property="ContextMenu">
-                        <Setter.Value>
-                            <ContextMenu>
-                                <ContextMenu.ItemContainerStyle>
-                                    <Style TargetType="MenuItem">
-                                        <EventSetter Event="Click" Handler="MenuItem_Click" />
-                                    </Style>
-                                </ContextMenu.ItemContainerStyle>
-                                <MenuItem Header="复制" CommandParameter="copyItem" />
-                                <MenuItem Header="复制正文" CommandParameter="copyItemMessage" />
-                                <!--<Separator />-->
-                                <MenuItem Header="复制所有日志"  CommandParameter="copyLog" />
-                                <MenuItem Header="复制所有日志正文" CommandParameter="copyLogMessage" />
-                                <MenuItem Header="清空日志" CommandParameter="clearLog" />
-                            </ContextMenu>
-                        </Setter.Value>
-                    </Setter>
+                    <Setter Property="ContextMenu" Value="{DynamicResource CopyMenu}" />
                 </Style>
             </ListBox.ItemContainerStyle>
             <ListBox.ContextMenu>
