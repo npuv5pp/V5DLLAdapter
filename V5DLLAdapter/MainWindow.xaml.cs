@@ -150,24 +150,25 @@ namespace V5DLLAdapter
         {
             if (!IsRunning)
             {
-                dll = new StrategyDll();
-                if (!dll.Load(Path, ReverseCoordinate))
-                {
-                    dll = new LegacyDll();
-                    if (dll.Load(Path, ReverseCoordinate))
-                    {
-                        Log("采用兼容模式", severity: Severity.Warning);
-                    }
-                    else
-                    {
-                        Log($"无法加载指定的策略程序 {Path}", severity: Severity.Error);
-                        Notify(nameof(IsRunning));
-                        return;
-                    }
-                }
-                Log($"已加载策略程序 {Path}", severity: Severity.Verbose);
                 try
                 {
+                    dll = new StrategyDll();
+                    if (!dll.Load(Path, ReverseCoordinate))
+                    {
+                        dll = new LegacyDll();
+                        if (dll.Load(Path, ReverseCoordinate))
+                        {
+                            Log("采用兼容模式", severity: Severity.Warning);
+                        }
+                        else
+                        {
+                            Log($"无法加载指定的策略程序 {Path}", severity: Severity.Error);
+                            Notify(nameof(IsRunning));
+                            return;
+                        }
+                    }
+                    Log($"已加载策略程序 {Path}", severity: Severity.Verbose);
+                
                     server = new StrategyServer(Port, dll);
                     Task.Run(() =>
                     {
@@ -321,10 +322,6 @@ namespace V5DLLAdapter
             {
                 Log(ex.Message, tag: "StrategyTest", severity: Severity.Error);
             }
-            finally
-            {
-                client.Dispose();
-            }
             if (client == null)
             {
                 return;
@@ -348,6 +345,10 @@ namespace V5DLLAdapter
                         Log("当前策略没有回应", tag: "StrategyTest", severity: Severity.Warning);
                         TestBtn.IsEnabled = true;
                     });
+                }
+                finally
+                {
+                    client.Dispose();
                 }
             });
         }

@@ -25,10 +25,10 @@ namespace V5DLLAdapter
         [DllImport("kernel32.dll")]
         private static extern bool FreeLibrary(IntPtr hLibModule);
 
-        protected DT LoadFunction<DT>(string funcName) where DT : Delegate
+        protected TDelegate LoadFunction<TDelegate>(string funcName) where TDelegate : Delegate
         {
             var ptr = GetProcAddress(CurrentModule, funcName);
-            return (DT)Marshal.GetDelegateForFunctionPointer(ptr, typeof(DT));
+            return (TDelegate)Marshal.GetDelegateForFunctionPointer(ptr, typeof(TDelegate));
         }
 
         public abstract string Dll { get; }
@@ -107,7 +107,7 @@ namespace V5DLLAdapter
                 _getPlacement = LoadFunction<GetPlacementDelegate>("GetPlacement");
                 //END UNMANAGED FUNCTIONS
             }
-            catch
+            catch (ArgumentNullException)
             {
                 Unload();
                 return false;
@@ -295,7 +295,7 @@ namespace V5DLLAdapter
                 _destroy = LoadFunction<LegacyStrategyDelegate>("Destroy");
                 //END UNMANAGED FUNCTIONS
             }
-            catch
+            catch(ArgumentNullException)
             {
                 Unload();
                 return false;
