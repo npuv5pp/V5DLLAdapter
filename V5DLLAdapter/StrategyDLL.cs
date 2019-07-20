@@ -261,14 +261,14 @@ namespace V5DLLAdapter
         
         private readonly Placement placement = new Placement
         {
-            Ball = new Ball {Position = new Vector2 {X = 50, Y = (float) 41.5}},
+            Ball = new Ball {Position = new Vector2 {X = 0, Y = 0}},
             Robots =
             {
-                new Robot {Position = new Vector2 {X = (float) 90.5, Y = 42}, Wheel = new Wheel()},
-                new Robot {Position = new Vector2 {X = 81, Y = 23}, Wheel = new Wheel()},
-                new Robot {Position = new Vector2 {X = 81, Y = 61}, Wheel = new Wheel()},
-                new Robot {Position = new Vector2 {X = 62, Y = 23}, Wheel = new Wheel()},
-                new Robot {Position = new Vector2 {X = 62, Y = 61}, Wheel = new Wheel()},
+                new Robot {Position = new Vector2 {X = (float) 102.5, Y = 0}, Wheel = new Wheel()},
+                new Robot {Position = new Vector2 {X = 81, Y = -48}, Wheel = new Wheel()},
+                new Robot {Position = new Vector2 {X = 81, Y = 48}, Wheel = new Wheel()},
+                new Robot {Position = new Vector2 {X = 30, Y = -48}, Wheel = new Wheel()},
+                new Robot {Position = new Vector2 {X = 30, Y = 48}, Wheel = new Wheel()},
             }
         };
 
