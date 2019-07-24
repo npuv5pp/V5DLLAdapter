@@ -8,7 +8,6 @@
         mc:Ignorable="d"
         Title="V5DLLAdapter" Height="500" Width="650" MinHeight="200" MinWidth="265" Drop="Window_Drop" AllowDrop="True" SourceInitialized="Window_SourceInitialized" Initialized="Window_Initialized">
     <Window.Resources>
-        <local:TooltipVisibilityConverter x:Key="TooltipVisibilityConverter"/>
         <ObjectDataProvider x:Key="logLevelsFromEnum" MethodName="GetValues"
                             ObjectType="{x:Type system:Enum}">
             <ObjectDataProvider.MethodParameters>
