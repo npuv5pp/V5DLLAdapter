@@ -42,7 +42,7 @@
             <Label Content="策略文件" />
             <DockPanel Grid.Column="1">
                 <CheckBox x:Name="isYellowStrategy" Content="黄方" IsChecked="{Binding ReverseCoordinate}" VerticalAlignment="Center" Margin="10,0,0,0" DockPanel.Dock="Right"/>
-                <TextBox x:Name="filePathEdit" Text="{Binding Path}" VerticalContentAlignment="Center" AllowDrop="True" PreviewDragOver="PreviewDragOver" d:LayoutOverrides="LeftPosition, RightPosition, TopPosition, BottomPosition" ToolTip="{Binding Text, ElementName=filePathEdit}" ToolTipService.IsEnabled="{Binding Text, ElementName=filePathEdit, Converter={StaticResource ResourceKey=TooltipVisibilityConverter}}" />
+                <TextBox x:Name="filePathEdit" Text="{Binding Path}" VerticalContentAlignment="Center" AllowDrop="True" PreviewDragOver="PreviewDragOver" d:LayoutOverrides="LeftPosition, RightPosition, TopPosition, BottomPosition" ToolTip="{Binding Text, ElementName=filePathEdit}" ToolTipService.ShowOnDisabled="True"/>
             </DockPanel>
             <Button x:Name="browseBtn" Content="浏览" Grid.Column="2" Click="BrowseBtn_Click" Margin="10,0,0,0"/>
             <Label Content="端口" Grid.Row="2"/>

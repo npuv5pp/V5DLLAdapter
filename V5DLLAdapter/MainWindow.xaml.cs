@@ -137,7 +137,7 @@ namespace V5DLLAdapter
                 = filePathEdit.IsEnabled
                 = browseBtn.IsEnabled
                 = portEdit.IsEnabled = !IsRunning;
-
+            
             startStopBtn.Content = IsRunning ? "停止" : "启动";
             UpdateTitle();
             if (e.PropertyName == "LogFilterKeyword")
@@ -168,7 +168,7 @@ namespace V5DLLAdapter
                         }
                     }
                     Log($"已加载策略程序 {Path}", severity: Severity.Verbose);
-
+                
                     server = new StrategyServer(Port, dll);
                     Task.Run(() =>
                     {
@@ -247,15 +247,15 @@ namespace V5DLLAdapter
             ScrollViewer logScroller = null;
             try
             {
-                var border = (Border)VisualTreeHelper.GetChild(logItems, 0);
-                logScroller = (ScrollViewer)VisualTreeHelper.GetChild(border, 0);
+                var border = (Border) VisualTreeHelper.GetChild(logItems, 0);
+                logScroller = (ScrollViewer) VisualTreeHelper.GetChild(border, 0);
                 scrollToEnd = logScroller.VerticalOffset == logScroller.ScrollableHeight;
             }
             // 使用 -Start 参数启动时，视觉元素尚未初始化
             catch (ArgumentOutOfRangeException)
             {
             }
-
+            
             var entry = new LogEntry
             {
                 dateTime = DateTime.Now,
@@ -499,7 +499,7 @@ namespace V5DLLAdapter
 
         private void Window_Initialized(object sender, EventArgs e)
         {
-            var app = (App)Application.Current;
+            var app = (App) Application.Current;
             using (var iterator = app.Args.AsEnumerable().GetEnumerator())
             {
                 bool start = false;
@@ -531,11 +531,11 @@ namespace V5DLLAdapter
 
                             Port = port;
                             break;
-
+                        
                         case "-START":
                             start = true;
                             break;
-
+                        
                         case "-YELLOW":
                             ReverseCoordinate = true;
                             break;
@@ -559,25 +559,5 @@ namespace V5DLLAdapter
     public enum Severity
     {
         Verbose, Info, Warning, Error
-    }
-
-    public class TooltipVisibilityConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            if (value is string)
-            {
-                return !String.IsNullOrEmpty(value as string);
-            }
-
-            return false;
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            throw new NotImplementedException();
-        }
     }
 }
