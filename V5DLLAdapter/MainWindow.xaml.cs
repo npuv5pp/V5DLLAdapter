@@ -19,6 +19,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Threading;
 using V5RPC;
 
 namespace V5DLLAdapter
@@ -53,6 +54,8 @@ namespace V5DLLAdapter
             get => _reverseCoordinate;
             set { _reverseCoordinate = value; Notify(nameof(ReverseCoordinate)); }
         }
+
+        private Thread serverThread;
 
         public bool IsRunning => dll.IsLoaded && server != null;
 
@@ -170,7 +173,7 @@ namespace V5DLLAdapter
                     Log($"已加载策略程序 {Path}", severity: Severity.Verbose);
                 
                     server = new StrategyServer(Port, dll);
-                    Task.Run(() =>
+                    serverThread = new Thread(() =>
                     {
                         try
                         {
@@ -203,6 +206,8 @@ namespace V5DLLAdapter
             {
                 server.Dispose();
                 server = null;
+                serverThread.Abort();
+                serverThread = null;
                 dll.Unload();
                 Notify(nameof(IsRunning));
                 Log("策略服务器已停止", severity: Severity.Info);
