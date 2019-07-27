@@ -326,8 +326,9 @@ namespace V5DLLAdapter
 
         public override void Unload()
         {
-            var env = new Native.Legacy.Environment();
-            _destroy?.Invoke(ref env);
+            // 注释这两条代码之后可能导致内存泄漏，但会避免潜在的崩溃
+            //var env = new Native.Legacy.Environment();
+            //_destroy?.Invoke(ref env);
 
             base.Unload();
 
