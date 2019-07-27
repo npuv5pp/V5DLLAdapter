@@ -23,9 +23,9 @@
             <MenuItem Header="清空日志" Click="MenuItem_Click" CommandParameter="clearLog" />
         </ContextMenu>
     </Window.Resources>
-    <d:DataContext>
+    <d:Window.DataContext>
         <local:MainWindow />
-    </d:DataContext>
+    </d:Window.DataContext>
     <DockPanel>
         <Grid Margin="20,20,20,20" VerticalAlignment="Top" DockPanel.Dock="Top">
             <Grid.RowDefinitions>

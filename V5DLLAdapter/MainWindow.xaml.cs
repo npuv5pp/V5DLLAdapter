@@ -189,6 +189,7 @@ namespace V5DLLAdapter
                             });
                         }
                     });
+                    serverThread.Start();
                     Log("策略服务器开始运行", severity: Severity.Info);
                 }
                 catch (Exception ex)
