@@ -14,7 +14,7 @@ namespace V5DLLAdapter
     abstract class StrategyDllBase : IDisposable, IStrategy
     {
         protected IntPtr CurrentModule = IntPtr.Zero;
-        public bool IsLoaded => CurrentModule != IntPtr.Zero;
+        public virtual bool IsLoaded => CurrentModule != IntPtr.Zero;
 
         protected bool ReverseCoordinate = false;
 
@@ -398,6 +398,50 @@ namespace V5DLLAdapter
                     whosball = judgeResult.OffensiveTeam;
                     break;
             }
+        }
+    }
+
+    class EmptyDll : StrategyDllBase
+    {
+        private bool isLoaded = false;
+        public override bool IsLoaded => isLoaded;
+
+        public override string Dll => "Placeholder";
+
+        public override Wheel[] GetInstruction(Field field)
+        {
+            return new Wheel[5]
+            {
+                new Wheel(),
+                new Wheel(),
+                new Wheel(),
+                new Wheel(),
+                new Wheel(),
+            };
+        }
+
+        public override Placement GetPlacement(Field field)
+        {
+            using (LegacyDll legacyDll = new LegacyDll())
+                return legacyDll.GetPlacement(field);
+        }
+
+        public override TeamInfo GetTeamInfo()
+        {
+            return new TeamInfo() { TeamName = "Nobody" };
+        }
+
+        public override bool Load(string dllPath, bool reverse, out Exception exception)
+        {
+            isLoaded = true;
+            exception = null;
+            return true;
+        }
+
+        public override void OnEvent(EventType type, EventArguments arguments)
+        {
+            isLoaded = false;
+            return;
         }
     }
 

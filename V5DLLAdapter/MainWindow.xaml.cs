@@ -155,25 +155,33 @@ namespace V5DLLAdapter
             {
                 try
                 {
-                    dll = new StrategyDll();
-                    if (!dll.Load(Path, ReverseCoordinate, out Exception ex1))
+                    if (string.IsNullOrWhiteSpace(Path))
                     {
-                        Log(ex1.Message, severity: Severity.Verbose);
-                        dll = new LegacyDll();
-                        if (dll.Load(Path, ReverseCoordinate, out Exception ex2))
-                        {
-                            Log("采用兼容模式", severity: Severity.Warning);
-                        }
-                        else
-                        {
-                            Log($"无法加载指定的策略程序 {Path}", severity: Severity.Error);
-                            Log(ex2.Message, severity: Severity.Verbose);
-                            Notify(nameof(IsRunning));
-                            return;
-                        }
+                        dll = new EmptyDll();
+                        dll.Load("", false, out Exception _);
+                        Log("开始一个空的策略服务器", severity: Severity.Info);
                     }
-                    Log($"已加载策略程序 {Path}", severity: Severity.Verbose);
-                
+                    else
+                    {
+                        dll = new StrategyDll();
+                        if (!dll.Load(Path, ReverseCoordinate, out Exception ex1))
+                        {
+                            Log(ex1.Message, severity: Severity.Verbose);
+                            dll = new LegacyDll();
+                            if (dll.Load(Path, ReverseCoordinate, out Exception ex2))
+                            {
+                                Log("采用兼容模式", severity: Severity.Warning);
+                            }
+                            else
+                            {
+                                Log($"无法加载指定的策略程序 {Path}", severity: Severity.Error);
+                                Log(ex2.Message, severity: Severity.Verbose);
+                                return;
+                            }
+                        }
+                        Log($"已加载策略程序 {Path}", severity: Severity.Verbose);
+                    }
+
                     server = new StrategyServer(Port, dll);
                     serverThread = new Thread(() =>
                     {
