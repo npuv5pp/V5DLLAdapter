@@ -77,7 +77,12 @@
             </DockPanel>
             <Button x:Name="startStopBtn" Content="启动/停止" Grid.Row="2" Grid.Column="2" Click="StartStopBtn_Click" Margin="10,0,0,0"/>
         </Grid>
-        <ListBox x:Name="logItems" Margin="20,0,20,20" ItemsSource="{Binding LogOutput, Mode=OneWay}" Background="Black">
+        <ListBox x:Name="logItems" Margin="20,0,20,20" ItemsSource="{Binding LogOutput, Mode=OneWay}" Background="Black" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.Resources>
+                <Style TargetType="TextBlock">
+                    <Setter Property="TextWrapping" Value="Wrap" />
+                </Style>
+            </ListBox.Resources>
             <ListBox.ItemContainerStyle>
                 <Style TargetType="{x:Type ListBoxItem}">
                     <Setter Property="Foreground" Value="{Binding Color}" />
