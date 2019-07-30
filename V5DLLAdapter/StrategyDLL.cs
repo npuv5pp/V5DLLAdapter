@@ -18,7 +18,7 @@ namespace V5DLLAdapter
 
         protected bool ReverseCoordinate = false;
 
-        [DllImport("kernel32.dll")]
+        [DllImport("kernel32.dll", SetLastError = true)]
         protected static extern IntPtr LoadLibrary(string lpLibFileName);
         [DllImport("kernel32.dll")]
         private static extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
@@ -33,7 +33,8 @@ namespace V5DLLAdapter
 
         public abstract string Dll { get; }
 
-        public abstract bool Load(string dllPath, bool reverse);
+        // TODO: 是否应该直接抛错？
+        public abstract bool Load(string dllPath, bool reverse, out Exception exception);
         public virtual void Unload()
         {
             if (IsLoaded)
@@ -83,18 +84,21 @@ namespace V5DLLAdapter
         {
         }
 
-        public override bool Load(string dllPath, bool reverse)
+        public override bool Load(string dllPath, bool reverse, out Exception exception)
         {
             if (IsLoaded)
             {
+                exception = new Exception("DLL has loaded.");
                 return false;
             }
 
             ReverseCoordinate = reverse;
             _lastDllPath = dllPath;
             var hModule = LoadLibrary(dllPath);
+            var errorCode = Marshal.GetLastWin32Error();
             if (hModule == IntPtr.Zero)
             {
+                exception = new Exception($"Error load {dllPath}, code {errorCode}");
                 return false;
             }
             CurrentModule = hModule;
@@ -107,11 +111,13 @@ namespace V5DLLAdapter
                 _getPlacement = LoadFunction<GetPlacementDelegate>("GetPlacement");
                 //END UNMANAGED FUNCTIONS
             }
-            catch (ArgumentNullException)
+            catch (ArgumentNullException e)
             {
                 Unload();
+                exception = new Exception("Missing function", e);
                 return false;
             }
+            exception = null;
             return true;
         }
 
@@ -276,18 +282,21 @@ namespace V5DLLAdapter
             }
         };
 
-        public override bool Load(string dllPath, bool reverse)
+        public override bool Load(string dllPath, bool reverse, out Exception exception)
         {
             if (IsLoaded)
             {
+                exception = new Exception("DLL has loaded.");
                 return false;
             }
             
             ReverseCoordinate = reverse;
             _lastDllPath = dllPath;
             var hModule = LoadLibrary(dllPath);
+            var errorCode = Marshal.GetLastWin32Error();
             if (hModule == IntPtr.Zero)
             {
+                exception = new Exception($"Error load {dllPath}, code {errorCode}");
                 return false;
             }
             CurrentModule = hModule;
@@ -299,9 +308,10 @@ namespace V5DLLAdapter
                 _destroy = LoadFunction<LegacyStrategyDelegate>("Destroy");
                 //END UNMANAGED FUNCTIONS
             }
-            catch(ArgumentNullException)
+            catch(ArgumentNullException e)
             {
                 Unload();
+                exception = new Exception("Missing function", e);
                 return false;
             }
 
@@ -321,6 +331,7 @@ namespace V5DLLAdapter
             
             _create?.Invoke(ref env);
             userData = env.UserData;
+            exception = null;
             return true;
         }
 
