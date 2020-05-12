@@ -50,8 +50,8 @@ namespace V5DLLAdapter
         }
 
         public abstract void OnEvent(EventType type, EventArguments arguments);
-        public abstract TeamInfo GetTeamInfo();
-        public abstract Wheel[] GetInstruction(Field field);
+        public abstract TeamInfo GetTeamInfo(ServerInfo info);
+        public abstract (Wheel[], ControlInfo) GetInstruction(Field field);
         public abstract Placement GetPlacement(Field field);
     }
 
@@ -171,7 +171,7 @@ namespace V5DLLAdapter
         }
 
         [HandleProcessCorruptedStateExceptions]
-        public override TeamInfo GetTeamInfo()
+        public override TeamInfo GetTeamInfo(ServerInfo info)
         {
             if (_getTeamInfo == null)
             {
@@ -192,7 +192,7 @@ namespace V5DLLAdapter
             };
         }
 
-        public override Wheel[] GetInstruction(Field field)
+        public override (Wheel[], ControlInfo) GetInstruction(Field field)
         {
             if (_getInstruction == null)
             {
@@ -214,7 +214,7 @@ namespace V5DLLAdapter
             {
                 throw new DllException("GetInstruction", e);
             }
-            return nativeField.SelfRobots.Select(x => (Wheel) x.wheel).ToArray();
+            return (nativeField.SelfRobots.Select(x => (Wheel) x.wheel).ToArray(),new ControlInfo());//TODO
         }
 
         public override Placement GetPlacement(Field field)
@@ -348,7 +348,7 @@ namespace V5DLLAdapter
             _destroy = null;
         }
 
-        public override Wheel[] GetInstruction(Field field)
+        public override (Wheel[], ControlInfo) GetInstruction(Field field)
         {
             if (_strategy == null)
             {
@@ -371,11 +371,13 @@ namespace V5DLLAdapter
                 throw new DllException("Strategy", e);
             }
 
-            return env.SelfRobots.Select(x => new Wheel()
+            return (env.SelfRobots.Select(x => new Wheel()
             {
                 LeftSpeed = (float) x.VelocityLeft,
                 RightSpeed = (float) x.VelocityRight
-            }).ToArray();
+            }).ToArray(),
+            new ControlInfo()
+            );//TODO
         }
 
         public override Placement GetPlacement(Field field)
@@ -383,7 +385,7 @@ namespace V5DLLAdapter
             return placement;
         }
 
-        public override TeamInfo GetTeamInfo()
+        public override TeamInfo GetTeamInfo(ServerInfo info)
         {
             return new TeamInfo { TeamName = "Legacy DLL" };
         }
@@ -408,16 +410,18 @@ namespace V5DLLAdapter
 
         public override string Dll => "Placeholder";
 
-        public override Wheel[] GetInstruction(Field field)
+        public override (Wheel[], ControlInfo) GetInstruction(Field field)
         {
-            return new Wheel[5]
+            return (
+            new Wheel[5]
             {
                 new Wheel(),
                 new Wheel(),
                 new Wheel(),
                 new Wheel(),
                 new Wheel(),
-            };
+            },
+            new ControlInfo());//TODO
         }
 
         public override Placement GetPlacement(Field field)
@@ -426,7 +430,7 @@ namespace V5DLLAdapter
                 return legacyDll.GetPlacement(field);
         }
 
-        public override TeamInfo GetTeamInfo()
+        public override TeamInfo GetTeamInfo(ServerInfo info)
         {
             return new TeamInfo() { TeamName = "Nobody" };
         }
