@@ -221,14 +221,8 @@ namespace V5DLLAdapter
             {
                 throw new DllException("GetInstruction", e);
             }
-/*            Wheel[] wheel_5=new Wheel[5];
-            foreach (var wheel_i in wheel_5)
-            {
-                wheel_i.LeftSpeed = -100 * (float)GetControlInfo(controlInfo).Command;
-                wheel_i.RightSpeed = 100 * (float)GetControlInfo(controlInfo).Command;
-            }*/
             return (nativeField.SelfRobots.Select(x => (Wheel) x.wheel).ToArray(),GetControlInfo(controlInfo));
-            //return (wheel_5, GetControlInfo(controlInfo));
+
         }
         public override ControlInfo GetControlInfo(ControlInfo controlInfo)
         {
