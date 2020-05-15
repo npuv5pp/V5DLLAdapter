@@ -52,6 +52,7 @@ namespace V5DLLAdapter
         public abstract void OnEvent(EventType type, EventArguments arguments);
         public abstract TeamInfo GetTeamInfo(ServerInfo info);
         public abstract (Wheel[], ControlInfo) GetInstruction(Field field);
+        public abstract ControlInfo GetControlInfo();
         public abstract Placement GetPlacement(Field field);
     }
 
@@ -69,6 +70,10 @@ namespace V5DLLAdapter
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate void GetInstructionDelegate(ref Native.Field field);
         GetInstructionDelegate _getInstruction;
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        delegate void GetControlInfoDelegate(ref Native.ControlInfo controlInfo);
+        GetControlInfoDelegate _getControlInfo;
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate void GetPlacementDelegate(ref Native.Field field);
@@ -109,6 +114,7 @@ namespace V5DLLAdapter
                 _onEvent = LoadFunction<OnEventDelegate>("OnEvent");
                 _getInstruction = LoadFunction<GetInstructionDelegate>("GetInstruction");
                 _getPlacement = LoadFunction<GetPlacementDelegate>("GetPlacement");
+                _getControlInfo = LoadFunction<GetControlInfoDelegate>("GetControlInfo");
                 //END UNMANAGED FUNCTIONS
             }
             catch (ArgumentNullException e)
@@ -214,8 +220,29 @@ namespace V5DLLAdapter
             {
                 throw new DllException("GetInstruction", e);
             }
-            return (nativeField.SelfRobots.Select(x => (Wheel) x.wheel).ToArray(),new ControlInfo());//TODO
+            return (nativeField.SelfRobots.Select(x => (Wheel) x.wheel).ToArray(),GetControlInfo());
         }
+        public override ControlInfo GetControlInfo()
+        {
+            if (_getControlInfo == null)
+            {
+                throw new DllNotFoundException();
+            }
+
+            // 将 Proto 的结构转为本地结构
+            var nativeControlInfo = new Native.ControlInfo();
+
+            try
+            {
+                _getControlInfo(ref nativeControlInfo);
+            }
+            catch (Exception e)
+            {
+                throw new DllException("GetControl", e);
+            }
+            return (V5RPC.Proto.ControlInfo)nativeControlInfo;
+        }
+
 
         public override Placement GetPlacement(Field field)
         {
@@ -376,8 +403,8 @@ namespace V5DLLAdapter
                 LeftSpeed = (float) x.VelocityLeft,
                 RightSpeed = (float) x.VelocityRight
             }).ToArray(),
-            new ControlInfo()
-            );//TODO
+            GetControlInfo()
+            );
         }
 
         public override Placement GetPlacement(Field field)
@@ -385,6 +412,12 @@ namespace V5DLLAdapter
             return placement;
         }
 
+        public override ControlInfo GetControlInfo()
+        {
+            ControlInfo controlInfo = new ControlInfo();
+            controlInfo.Command = ControlType.Continue;
+            return controlInfo;
+        }
         public override TeamInfo GetTeamInfo(ServerInfo info)
         {
             return new TeamInfo { TeamName = "Legacy DLL" };
@@ -421,7 +454,14 @@ namespace V5DLLAdapter
                 new Wheel(),
                 new Wheel(),
             },
-            new ControlInfo());//TODO
+            GetControlInfo());
+        }
+
+        public override ControlInfo GetControlInfo()
+        {
+            ControlInfo controlInfo = new ControlInfo();
+            controlInfo.Command = ControlType.Continue;
+            return controlInfo;
         }
 
         public override Placement GetPlacement(Field field)

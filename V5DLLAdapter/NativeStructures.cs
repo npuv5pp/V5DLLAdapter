@@ -143,6 +143,28 @@ namespace V5DLLAdapter
             }
         }
 
+        enum ControlType
+        {
+            Continue=0,
+            Reset=1
+        }
+
+        struct ControlInfo
+        {
+            public ControlInfo(V5RPC.Proto.ControlInfo obj)
+            {
+                Command = (V5DLLAdapter.Native.ControlType)obj.Command;
+            }
+            public static explicit operator V5RPC.Proto.ControlInfo(ControlInfo obj)
+            {
+                return new V5RPC.Proto.ControlInfo
+                {
+                    Command = (V5RPC.Proto.ControlType)obj.Command
+                };
+            }
+            public ControlType Command;
+        }
+
         namespace Legacy
         {
             struct Vector3
