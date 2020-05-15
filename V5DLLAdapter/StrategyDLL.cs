@@ -52,7 +52,7 @@ namespace V5DLLAdapter
         public abstract void OnEvent(EventType type, EventArguments arguments);
         public abstract TeamInfo GetTeamInfo(ServerInfo info);
         public abstract (Wheel[], ControlInfo) GetInstruction(Field field);
-        public abstract ControlInfo GetControlInfo();
+        public abstract ControlInfo GetControlInfo(ControlInfo controlInfo);
         public abstract Placement GetPlacement(Field field);
     }
 
@@ -207,6 +207,7 @@ namespace V5DLLAdapter
 
             // 将 Proto 的结构转为本地结构
             var nativeField = new Native.Field(field);
+            var controlInfo = new ControlInfo();
             if (ReverseCoordinate)
             {
                 // 翻转，获得黄方坐标
@@ -220,9 +221,16 @@ namespace V5DLLAdapter
             {
                 throw new DllException("GetInstruction", e);
             }
-            return (nativeField.SelfRobots.Select(x => (Wheel) x.wheel).ToArray(),GetControlInfo());
+/*            Wheel[] wheel_5=new Wheel[5];
+            foreach (var wheel_i in wheel_5)
+            {
+                wheel_i.LeftSpeed = -100 * (float)GetControlInfo(controlInfo).Command;
+                wheel_i.RightSpeed = 100 * (float)GetControlInfo(controlInfo).Command;
+            }*/
+            return (nativeField.SelfRobots.Select(x => (Wheel) x.wheel).ToArray(),GetControlInfo(controlInfo));
+            //return (wheel_5, GetControlInfo(controlInfo));
         }
-        public override ControlInfo GetControlInfo()
+        public override ControlInfo GetControlInfo(ControlInfo controlInfo)
         {
             if (_getControlInfo == null)
             {
@@ -230,7 +238,7 @@ namespace V5DLLAdapter
             }
 
             // 将 Proto 的结构转为本地结构
-            var nativeControlInfo = new Native.ControlInfo();
+            var nativeControlInfo = new Native.ControlInfo(controlInfo);
 
             try
             {
@@ -242,8 +250,6 @@ namespace V5DLLAdapter
             }
             return (V5RPC.Proto.ControlInfo)nativeControlInfo;
         }
-
-
         public override Placement GetPlacement(Field field)
         {
             if (_getPlacement == null)
@@ -383,6 +389,7 @@ namespace V5DLLAdapter
             }
 
             var nativeField = new Native.Field(field);
+            var controlInfo = new ControlInfo();
             if (ReverseCoordinate)
             {
                 nativeField.Reverse();
@@ -403,7 +410,7 @@ namespace V5DLLAdapter
                 LeftSpeed = (float) x.VelocityLeft,
                 RightSpeed = (float) x.VelocityRight
             }).ToArray(),
-            GetControlInfo()
+            GetControlInfo(controlInfo)
             );
         }
 
@@ -412,11 +419,11 @@ namespace V5DLLAdapter
             return placement;
         }
 
-        public override ControlInfo GetControlInfo()
+        public override ControlInfo GetControlInfo(ControlInfo controlInfo)
         {
-            ControlInfo controlInfo = new ControlInfo();
-            controlInfo.Command = ControlType.Continue;
-            return controlInfo;
+            ControlInfo controlInfo_new = new ControlInfo();
+            controlInfo_new.Command = ControlType.Continue;
+            return controlInfo_new;
         }
         public override TeamInfo GetTeamInfo(ServerInfo info)
         {
@@ -445,6 +452,7 @@ namespace V5DLLAdapter
 
         public override (Wheel[], ControlInfo) GetInstruction(Field field)
         {
+            var controlInfo = new ControlInfo();
             return (
             new Wheel[5]
             {
@@ -454,14 +462,14 @@ namespace V5DLLAdapter
                 new Wheel(),
                 new Wheel(),
             },
-            GetControlInfo());
+            GetControlInfo(controlInfo));
         }
 
-        public override ControlInfo GetControlInfo()
+        public override ControlInfo GetControlInfo(ControlInfo controlInfo)
         {
-            ControlInfo controlInfo = new ControlInfo();
-            controlInfo.Command = ControlType.Continue;
-            return controlInfo;
+            ControlInfo controlInfo_new = new ControlInfo();
+            controlInfo_new.Command = ControlType.Continue;
+            return controlInfo_new;
         }
 
         public override Placement GetPlacement(Field field)
