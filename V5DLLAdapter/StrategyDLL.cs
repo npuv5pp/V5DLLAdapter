@@ -392,14 +392,13 @@ namespace V5DLLAdapter
             {
                 throw new DllException("Strategy", e);
             }
-            var controlInfo = new ControlInfo();
-            controlInfo.Command = ControlType.Continue;
+            var controlInfo = new ControlInfo { Command = ControlType.Continue };
             var wheel = env.SelfRobots.Select(x => new Wheel()
             {
                 LeftSpeed = (float)x.VelocityLeft,
                 RightSpeed = (float)x.VelocityRight
             }).ToArray();
-            return (wheel,controlInfo);
+            return (wheel, controlInfo);
         }
 
         public override Placement GetPlacement(Field field)
@@ -442,8 +441,7 @@ namespace V5DLLAdapter
                 new Wheel(),
                 new Wheel(),
             };
-            var controlInfo = new ControlInfo();
-            controlInfo.Command = ControlType.Continue;
+            var controlInfo = new ControlInfo { Command = ControlType.Continue };
             return (wheel, controlInfo);
 
         }
