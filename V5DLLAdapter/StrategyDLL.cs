@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Documents;
 using V5RPC;
 using V5RPC.Proto;
 
@@ -50,8 +46,8 @@ namespace V5DLLAdapter
         }
 
         public abstract void OnEvent(EventType type, EventArguments arguments);
-        public abstract TeamInfo GetTeamInfo();
-        public abstract Wheel[] GetInstruction(Field field);
+        public abstract TeamInfo GetTeamInfo(ServerInfo info);
+        public abstract (Wheel[], ControlInfo) GetInstruction(Field field);
         public abstract Placement GetPlacement(Field field);
     }
 
@@ -69,6 +65,10 @@ namespace V5DLLAdapter
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate void GetInstructionDelegate(ref Native.Field field);
         GetInstructionDelegate _getInstruction;
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        delegate void GetControlInfoDelegate(ref Native.ControlInfo controlInfo);
+        GetControlInfoDelegate _getControlInfo;
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate void GetPlacementDelegate(ref Native.Field field);
@@ -109,6 +109,7 @@ namespace V5DLLAdapter
                 _onEvent = LoadFunction<OnEventDelegate>("OnEvent");
                 _getInstruction = LoadFunction<GetInstructionDelegate>("GetInstruction");
                 _getPlacement = LoadFunction<GetPlacementDelegate>("GetPlacement");
+                _getControlInfo = LoadFunction<GetControlInfoDelegate>("GetControlInfo");
                 //END UNMANAGED FUNCTIONS
             }
             catch (ArgumentNullException e)
@@ -171,7 +172,7 @@ namespace V5DLLAdapter
         }
 
         [HandleProcessCorruptedStateExceptions]
-        public override TeamInfo GetTeamInfo()
+        public override TeamInfo GetTeamInfo(ServerInfo info)
         {
             if (_getTeamInfo == null)
             {
@@ -192,7 +193,7 @@ namespace V5DLLAdapter
             };
         }
 
-        public override Wheel[] GetInstruction(Field field)
+        public override (Wheel[], ControlInfo) GetInstruction(Field field)
         {
             if (_getInstruction == null)
             {
@@ -201,6 +202,7 @@ namespace V5DLLAdapter
 
             // 将 Proto 的结构转为本地结构
             var nativeField = new Native.Field(field);
+            var controlInfo = new ControlInfo();
             if (ReverseCoordinate)
             {
                 // 翻转，获得黄方坐标
@@ -214,9 +216,29 @@ namespace V5DLLAdapter
             {
                 throw new DllException("GetInstruction", e);
             }
-            return nativeField.SelfRobots.Select(x => (Wheel) x.wheel).ToArray();
-        }
+            return (nativeField.SelfRobots.Select(x => (Wheel)x.wheel).ToArray(), GetControlInfo(controlInfo));
 
+        }
+        public ControlInfo GetControlInfo(ControlInfo controlInfo)
+        {
+            if (_getControlInfo == null)
+            {
+                throw new DllNotFoundException();
+            }
+
+            // 将 Proto 的结构转为本地结构
+            var nativeControlInfo = new Native.ControlInfo(controlInfo);
+
+            try
+            {
+                _getControlInfo(ref nativeControlInfo);
+            }
+            catch (Exception e)
+            {
+                throw new DllException("GetControl", e);
+            }
+            return (V5RPC.Proto.ControlInfo)nativeControlInfo;
+        }
         public override Placement GetPlacement(Field field)
         {
             if (_getPlacement == null)
@@ -264,14 +286,14 @@ namespace V5DLLAdapter
 
         string _lastDllPath = null;
         public override string Dll => IsLoaded ? _lastDllPath : null;
-        
+
         JudgeResultEvent.Types.ResultType gameState = JudgeResultEvent.Types.ResultType.PlaceKick;
         Team whosball = Team.Nobody;
         IntPtr userData = IntPtr.Zero;
 
         private readonly Placement placement = new Placement
         {
-            Ball = new Ball {Position = new Vector2 {X = 0, Y = 0}},
+            Ball = new Ball { Position = new Vector2 { X = 0, Y = 0 } },
             Robots =
             {
                 new Robot {Position = new Vector2 {X = (float) 102.5, Y = 0}, Wheel = new Wheel()},
@@ -289,7 +311,7 @@ namespace V5DLLAdapter
                 exception = new Exception("DLL has loaded.");
                 return false;
             }
-            
+
             ReverseCoordinate = reverse;
             _lastDllPath = dllPath;
             var hModule = LoadLibrary(dllPath);
@@ -308,7 +330,7 @@ namespace V5DLLAdapter
                 _destroy = LoadFunction<LegacyStrategyDelegate>("Destroy");
                 //END UNMANAGED FUNCTIONS
             }
-            catch(ArgumentNullException e)
+            catch (ArgumentNullException e)
             {
                 Unload();
                 exception = new Exception("Missing function", e);
@@ -317,10 +339,10 @@ namespace V5DLLAdapter
 
             var env = new Native.Legacy.Environment()
             {
-                
-                CurrentBall = new Native.Legacy.Ball {Position = new Native.Legacy.Vector3 {x = 50, y =  41.5}},
+
+                CurrentBall = new Native.Legacy.Ball { Position = new Native.Legacy.Vector3 { x = 50, y = 41.5 } },
                 SelfRobots =
-                new [] {
+                new[] {
                     new Native.Legacy.Robot {Position = new Native.Legacy.Vector3 {x = 90.5, y = 42}},
                     new Native.Legacy.Robot {Position = new Native.Legacy.Vector3 {x = 81, y = 23}},
                     new Native.Legacy.Robot {Position = new Native.Legacy.Vector3 {x = 81, y = 61}},
@@ -328,7 +350,7 @@ namespace V5DLLAdapter
                     new Native.Legacy.Robot {Position = new Native.Legacy.Vector3 {x = 62, y = 61}},
                 }
             };
-            
+
             _create?.Invoke(ref env);
             userData = env.UserData;
             exception = null;
@@ -348,7 +370,7 @@ namespace V5DLLAdapter
             _destroy = null;
         }
 
-        public override Wheel[] GetInstruction(Field field)
+        public override (Wheel[], ControlInfo) GetInstruction(Field field)
         {
             if (_strategy == null)
             {
@@ -370,12 +392,13 @@ namespace V5DLLAdapter
             {
                 throw new DllException("Strategy", e);
             }
-
-            return env.SelfRobots.Select(x => new Wheel()
+            var controlInfo = new ControlInfo { Command = ControlType.Continue };
+            var wheel = env.SelfRobots.Select(x => new Wheel()
             {
-                LeftSpeed = (float) x.VelocityLeft,
-                RightSpeed = (float) x.VelocityRight
+                LeftSpeed = (float)x.VelocityLeft,
+                RightSpeed = (float)x.VelocityRight
             }).ToArray();
+            return (wheel, controlInfo);
         }
 
         public override Placement GetPlacement(Field field)
@@ -383,7 +406,7 @@ namespace V5DLLAdapter
             return placement;
         }
 
-        public override TeamInfo GetTeamInfo()
+        public override TeamInfo GetTeamInfo(ServerInfo info)
         {
             return new TeamInfo { TeamName = "Legacy DLL" };
         }
@@ -408,9 +431,9 @@ namespace V5DLLAdapter
 
         public override string Dll => "Placeholder";
 
-        public override Wheel[] GetInstruction(Field field)
+        public override (Wheel[], ControlInfo) GetInstruction(Field field)
         {
-            return new Wheel[5]
+            var wheel = new Wheel[5]
             {
                 new Wheel(),
                 new Wheel(),
@@ -418,6 +441,9 @@ namespace V5DLLAdapter
                 new Wheel(),
                 new Wheel(),
             };
+            var controlInfo = new ControlInfo { Command = ControlType.Continue };
+            return (wheel, controlInfo);
+
         }
 
         public override Placement GetPlacement(Field field)
@@ -426,7 +452,7 @@ namespace V5DLLAdapter
                 return legacyDll.GetPlacement(field);
         }
 
-        public override TeamInfo GetTeamInfo()
+        public override TeamInfo GetTeamInfo(ServerInfo info)
         {
             return new TeamInfo() { TeamName = "Nobody" };
         }

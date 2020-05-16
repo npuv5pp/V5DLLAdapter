@@ -21,6 +21,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Threading;
 using V5RPC;
+using V5RPC.Proto;
 
 namespace V5DLLAdapter
 {
@@ -359,7 +360,7 @@ namespace V5DLLAdapter
             {
                 try
                 {
-                    var info = client.GetTeamInfo();
+                    var info = client.GetTeamInfo(new ServerInfo());//TODO
                     Dispatcher.Invoke(() =>
                     {
                         Log($"TeamName={info.TeamName}", tag: "StrategyTest", severity: Severity.Info);
