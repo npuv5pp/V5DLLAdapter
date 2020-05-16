@@ -52,7 +52,6 @@ namespace V5DLLAdapter
         public abstract void OnEvent(EventType type, EventArguments arguments);
         public abstract TeamInfo GetTeamInfo(ServerInfo info);
         public abstract (Wheel[], ControlInfo) GetInstruction(Field field);
-        public abstract ControlInfo GetControlInfo(ControlInfo controlInfo);
         public abstract Placement GetPlacement(Field field);
     }
 
@@ -221,10 +220,10 @@ namespace V5DLLAdapter
             {
                 throw new DllException("GetInstruction", e);
             }
-            return (nativeField.SelfRobots.Select(x => (Wheel) x.wheel).ToArray(),GetControlInfo(controlInfo));
+            return (nativeField.SelfRobots.Select(x => (Wheel)x.wheel).ToArray(), GetControlInfo(controlInfo));
 
         }
-        public override ControlInfo GetControlInfo(ControlInfo controlInfo)
+        public ControlInfo GetControlInfo(ControlInfo controlInfo)
         {
             if (_getControlInfo == null)
             {
@@ -291,14 +290,14 @@ namespace V5DLLAdapter
 
         string _lastDllPath = null;
         public override string Dll => IsLoaded ? _lastDllPath : null;
-        
+
         JudgeResultEvent.Types.ResultType gameState = JudgeResultEvent.Types.ResultType.PlaceKick;
         Team whosball = Team.Nobody;
         IntPtr userData = IntPtr.Zero;
 
         private readonly Placement placement = new Placement
         {
-            Ball = new Ball {Position = new Vector2 {X = 0, Y = 0}},
+            Ball = new Ball { Position = new Vector2 { X = 0, Y = 0 } },
             Robots =
             {
                 new Robot {Position = new Vector2 {X = (float) 102.5, Y = 0}, Wheel = new Wheel()},
@@ -316,7 +315,7 @@ namespace V5DLLAdapter
                 exception = new Exception("DLL has loaded.");
                 return false;
             }
-            
+
             ReverseCoordinate = reverse;
             _lastDllPath = dllPath;
             var hModule = LoadLibrary(dllPath);
@@ -335,7 +334,7 @@ namespace V5DLLAdapter
                 _destroy = LoadFunction<LegacyStrategyDelegate>("Destroy");
                 //END UNMANAGED FUNCTIONS
             }
-            catch(ArgumentNullException e)
+            catch (ArgumentNullException e)
             {
                 Unload();
                 exception = new Exception("Missing function", e);
@@ -344,10 +343,10 @@ namespace V5DLLAdapter
 
             var env = new Native.Legacy.Environment()
             {
-                
-                CurrentBall = new Native.Legacy.Ball {Position = new Native.Legacy.Vector3 {x = 50, y =  41.5}},
+
+                CurrentBall = new Native.Legacy.Ball { Position = new Native.Legacy.Vector3 { x = 50, y = 41.5 } },
                 SelfRobots =
-                new [] {
+                new[] {
                     new Native.Legacy.Robot {Position = new Native.Legacy.Vector3 {x = 90.5, y = 42}},
                     new Native.Legacy.Robot {Position = new Native.Legacy.Vector3 {x = 81, y = 23}},
                     new Native.Legacy.Robot {Position = new Native.Legacy.Vector3 {x = 81, y = 61}},
@@ -355,7 +354,7 @@ namespace V5DLLAdapter
                     new Native.Legacy.Robot {Position = new Native.Legacy.Vector3 {x = 62, y = 61}},
                 }
             };
-            
+
             _create?.Invoke(ref env);
             userData = env.UserData;
             exception = null;
@@ -383,7 +382,6 @@ namespace V5DLLAdapter
             }
 
             var nativeField = new Native.Field(field);
-            var controlInfo = new ControlInfo();
             if (ReverseCoordinate)
             {
                 nativeField.Reverse();
@@ -399,12 +397,15 @@ namespace V5DLLAdapter
                 throw new DllException("Strategy", e);
             }
 
+            var controlInfo = new ControlInfo();
+            controlInfo.Command = ControlType.Continue;
+
             return (env.SelfRobots.Select(x => new Wheel()
             {
-                LeftSpeed = (float) x.VelocityLeft,
-                RightSpeed = (float) x.VelocityRight
+                LeftSpeed = (float)x.VelocityLeft,
+                RightSpeed = (float)x.VelocityRight
             }).ToArray(),
-            GetControlInfo(controlInfo)
+            controlInfo
             );
         }
 
@@ -413,12 +414,6 @@ namespace V5DLLAdapter
             return placement;
         }
 
-        public override ControlInfo GetControlInfo(ControlInfo controlInfo)
-        {
-            ControlInfo controlInfo_new = new ControlInfo();
-            controlInfo_new.Command = ControlType.Continue;
-            return controlInfo_new;
-        }
         public override TeamInfo GetTeamInfo(ServerInfo info)
         {
             return new TeamInfo { TeamName = "Legacy DLL" };
@@ -446,24 +441,18 @@ namespace V5DLLAdapter
 
         public override (Wheel[], ControlInfo) GetInstruction(Field field)
         {
-            var controlInfo = new ControlInfo();
-            return (
-            new Wheel[5]
+            var wheel = new Wheel[5]
             {
                 new Wheel(),
                 new Wheel(),
                 new Wheel(),
                 new Wheel(),
                 new Wheel(),
-            },
-            GetControlInfo(controlInfo));
-        }
+            };
+            var controlInfo = new ControlInfo();
+            controlInfo.Command = ControlType.Continue;
+            return (wheel, controlInfo);
 
-        public override ControlInfo GetControlInfo(ControlInfo controlInfo)
-        {
-            ControlInfo controlInfo_new = new ControlInfo();
-            controlInfo_new.Command = ControlType.Continue;
-            return controlInfo_new;
         }
 
         public override Placement GetPlacement(Field field)

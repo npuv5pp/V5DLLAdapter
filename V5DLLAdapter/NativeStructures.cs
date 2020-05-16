@@ -126,7 +126,7 @@ namespace V5DLLAdapter
             public Robot[] opponentRobots;
             public Ball ball;
             public int tick;
-            
+
             public Field(V5RPC.Proto.Field obj)
             {
                 SelfRobots = obj.SelfRobots.Select(x => new Robot(x)).ToArray();
@@ -139,27 +139,22 @@ namespace V5DLLAdapter
             {
                 SelfRobots = SelfRobots.Select(x => x.Reverse()).ToArray();
                 opponentRobots = opponentRobots.Select(x => x.Reverse()).ToArray();
-                ball.position = new Vector2 {x = -ball.position.x, y = -ball.position.y};
+                ball.position = new Vector2 { x = -ball.position.x, y = -ball.position.y };
             }
         }
 
-        enum ControlType
-        {
-            Continue=0,
-            Reset=1
-        }
 
         struct ControlInfo
         {
             public ControlInfo(V5RPC.Proto.ControlInfo obj)
             {
-                Command = (V5DLLAdapter.Native.ControlType)obj.Command;
+                Command = obj.Command;
             }
             public static explicit operator V5RPC.Proto.ControlInfo(ControlInfo obj)
             {
                 return new V5RPC.Proto.ControlInfo
                 {
-                    Command = (V5RPC.Proto.ControlType)obj.Command
+                    Command = obj.Command
                 };
             }
             public ControlType Command;
@@ -197,7 +192,7 @@ namespace V5DLLAdapter
 
                 public static Vector3 operator -(Vector3 vector)
                 {
-                    return new Vector3 { x = -vector.x, y = -vector.y, z = -vector.z};
+                    return new Vector3 { x = -vector.x, y = -vector.y, z = -vector.z };
                 }
             }
 
@@ -214,7 +209,7 @@ namespace V5DLLAdapter
                 public double Rotation;
                 public double VelocityLeft, VelocityRight;
             }
-            
+
             struct OpponentRobot
             {
                 public OpponentRobot(Native.Robot obj)
@@ -315,7 +310,7 @@ namespace V5DLLAdapter
                         OpponentRobots[i].Rotation = Native.Robot.FlipRotation(OpponentRobots[i].Rotation);
                     }
 
-                    CurrentBall = new Ball {Position = -CurrentBall.Position};
+                    CurrentBall = new Ball { Position = -CurrentBall.Position };
                 }
             }
         }
