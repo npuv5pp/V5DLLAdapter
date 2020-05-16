@@ -18,4 +18,4 @@ jobs:
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v1
     - name: Build
-      run: msbuild V5DLLAdapter -p:Configuration=Release
+      run: msbuild V5DLLAdapter -p:Configuration=Release -r
