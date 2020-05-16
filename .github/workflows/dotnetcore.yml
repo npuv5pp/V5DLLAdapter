@@ -17,5 +17,7 @@ jobs:
         submodules:: recursive
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v1
+    - name: Restore
+      run: msbuild -t:Restore
     - name: Build
-      run: msbuild V5DLLAdapter -p:Configuration=Release -r
+      run: msbuild V5DLLAdapter -p:Configuration=Release
