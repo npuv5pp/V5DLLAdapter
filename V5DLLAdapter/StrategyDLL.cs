@@ -46,7 +46,7 @@ namespace V5DLLAdapter
         }
 
         public abstract void OnEvent(EventType type, EventArguments arguments);
-        public abstract TeamInfo GetTeamInfo(ServerInfo info);
+        public abstract TeamInfo GetTeamInfo(V5RPC.Proto.Version serverVersion);
         public abstract (Wheel[], ControlInfo) GetInstruction(Field field);
         public abstract Placement GetPlacement(Field field);
     }
@@ -172,7 +172,7 @@ namespace V5DLLAdapter
         }
 
         [HandleProcessCorruptedStateExceptions]
-        public override TeamInfo GetTeamInfo(ServerInfo info)
+        public override TeamInfo GetTeamInfo(V5RPC.Proto.Version serverVersion)
         {
             if (_getTeamInfo == null)
             {
@@ -406,7 +406,7 @@ namespace V5DLLAdapter
             return placement;
         }
 
-        public override TeamInfo GetTeamInfo(ServerInfo info)
+        public override TeamInfo GetTeamInfo(V5RPC.Proto.Version serverVersion)
         {
             return new TeamInfo { TeamName = "Legacy DLL" };
         }
@@ -452,7 +452,7 @@ namespace V5DLLAdapter
                 return legacyDll.GetPlacement(field);
         }
 
-        public override TeamInfo GetTeamInfo(ServerInfo info)
+        public override TeamInfo GetTeamInfo(V5RPC.Proto.Version serverVersion)
         {
             return new TeamInfo() { TeamName = "Nobody" };
         }

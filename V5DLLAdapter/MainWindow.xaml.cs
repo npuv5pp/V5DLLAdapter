@@ -360,7 +360,7 @@ namespace V5DLLAdapter
             {
                 try
                 {
-                    var info = client.GetTeamInfo(new ServerInfo());//TODO
+                    var info = client.GetTeamInfo(new V5RPC.Proto.Version());//TODO
                     Dispatcher.Invoke(() =>
                     {
                         Log($"TeamName={info.TeamName}", tag: "StrategyTest", severity: Severity.Info);
