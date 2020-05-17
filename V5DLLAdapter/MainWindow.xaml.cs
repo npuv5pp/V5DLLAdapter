@@ -36,7 +36,7 @@ namespace V5DLLAdapter
         ConsoleRedirectWriter consoleRedirectWriter = new ConsoleRedirectWriter();
         bool corruptedState = false;
 
-        int _port = 5555;
+        int _port = 20000;
         public int Port
         {
             get => _port;
