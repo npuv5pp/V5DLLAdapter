@@ -276,14 +276,13 @@ namespace V5DLLAdapter
                 catch (ArgumentOutOfRangeException)
                 {
                 }
-
-            var entry = new LogEntry
-            {
-                dateTime = DateTime.Now,
-                severity = severity,
-                tag = tag,
-                message = message
-            };
+                var entry = new LogEntry
+                {
+                    dateTime = DateTime.Now,
+                    severity = severity,
+                    tag = tag,
+                    message = message
+                };
                 LogOutput.Add(entry);
             });
             if (scrollToEnd)
