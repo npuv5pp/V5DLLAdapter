@@ -80,8 +80,15 @@ namespace V5DLLAdapter
 
         public const int MAX_STRING_LEN = 128;
 
+        public Action<string, string, Severity> Log;
+
         public StrategyDll()
         {
+        }
+
+        public StrategyDll(Action<string, string, Severity> Log)
+        {
+            this.Log = Log;
         }
 
         public override bool Load(string dllPath, bool reverse, out Exception exception)
@@ -174,6 +181,21 @@ namespace V5DLLAdapter
         [HandleProcessCorruptedStateExceptions]
         public override TeamInfo GetTeamInfo(V5RPC.Proto.Version serverVersion)
         {
+            string version = null;
+            switch (serverVersion)
+            {
+                case V5RPC.Proto.Version.V10:
+                {
+                    version = "1.0";
+                    break;
+                }
+                case V5RPC.Proto.Version.V11:
+                {
+                    version = "1.0";
+                    break;
+                }
+            }
+            Log("接口版本为"+version, "V5DLLAdapter", Severity.Verbose);
             if (_getTeamInfo == null)
             {
                 throw new DllNotFoundException();

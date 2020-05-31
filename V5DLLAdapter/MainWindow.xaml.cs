@@ -19,6 +19,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 using System.Threading;
 using V5RPC;
 using V5RPC.Proto;
@@ -164,7 +165,7 @@ namespace V5DLLAdapter
                     }
                     else
                     {
-                        dll = new StrategyDll();
+                        dll = new StrategyDll(Log);
                         if (!dll.Load(Path, ReverseCoordinate, out Exception ex1))
                         {
                             Log(ex1.Message, severity: Severity.Verbose);
@@ -263,17 +264,19 @@ namespace V5DLLAdapter
 
             bool scrollToEnd = false;
             ScrollViewer logScroller = null;
-            try
+            this.Dispatcher.BeginInvoke((Action)delegate ()
             {
-                var border = (Border) VisualTreeHelper.GetChild(logItems, 0);
-                logScroller = (ScrollViewer) VisualTreeHelper.GetChild(border, 0);
-                scrollToEnd = logScroller.VerticalOffset == logScroller.ScrollableHeight;
-            }
-            // 使用 -Start 参数启动时，视觉元素尚未初始化
-            catch (ArgumentOutOfRangeException)
-            {
-            }
-            
+                try
+                {
+                    var border = (Border) VisualTreeHelper.GetChild(logItems, 0);
+                    logScroller = (ScrollViewer) VisualTreeHelper.GetChild(border, 0);
+                    scrollToEnd = logScroller.VerticalOffset == logScroller.ScrollableHeight;
+                }
+                // 使用 -Start 参数启动时，视觉元素尚未初始化
+                catch (ArgumentOutOfRangeException)
+                {
+                }
+
             var entry = new LogEntry
             {
                 dateTime = DateTime.Now,
@@ -281,7 +284,8 @@ namespace V5DLLAdapter
                 tag = tag,
                 message = message
             };
-            LogOutput.Add(entry);
+                LogOutput.Add(entry);
+            });
             if (scrollToEnd)
             {
                 logScroller.ScrollToEnd();
