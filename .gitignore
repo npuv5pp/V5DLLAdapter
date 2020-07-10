@@ -1,4 +1,7 @@
-/.vs/
-/packages/
-/V5DLLAdapter/bin/
-/V5DLLAdapter/obj/
+.vs/
+packages/
+bin/
+obj/
+
+.idea
+*.DotSettings.user
