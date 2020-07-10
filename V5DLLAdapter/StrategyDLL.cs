@@ -46,7 +46,7 @@ namespace V5DLLAdapter
         }
 
         public abstract void OnEvent(EventType type, EventArguments arguments);
-        public abstract TeamInfo GetTeamInfo(ServerInfo info);
+        public abstract TeamInfo GetTeamInfo(V5RPC.Proto.Version serverVersion);
         public abstract (Wheel[], ControlInfo) GetInstruction(Field field);
         public abstract Placement GetPlacement(Field field);
     }
@@ -80,8 +80,16 @@ namespace V5DLLAdapter
 
         public const int MAX_STRING_LEN = 128;
 
+        Action<string, string, Severity> Log;
+
         public StrategyDll()
         {
+            this.Log = (string str1, string str2, Severity severity) => { };
+        }
+
+        public StrategyDll(Action<string, string, Severity> Log)
+        {
+            this.Log = Log;
         }
 
         public override bool Load(string dllPath, bool reverse, out Exception exception)
@@ -172,8 +180,23 @@ namespace V5DLLAdapter
         }
 
         [HandleProcessCorruptedStateExceptions]
-        public override TeamInfo GetTeamInfo(ServerInfo info)
+        public override TeamInfo GetTeamInfo(V5RPC.Proto.Version serverVersion)
         {
+            string version = null;
+            switch (serverVersion)
+            {
+                case V5RPC.Proto.Version.V10:
+                {
+                    version = "1.0";
+                    break;
+                }
+                case V5RPC.Proto.Version.V11:
+                {
+                    version = "1.1";
+                    break;
+                }
+            }
+            Log($"接口版本为 {version}", "V5DLLAdapter", Severity.Verbose);
             if (_getTeamInfo == null)
             {
                 throw new DllNotFoundException();
@@ -406,7 +429,7 @@ namespace V5DLLAdapter
             return placement;
         }
 
-        public override TeamInfo GetTeamInfo(ServerInfo info)
+        public override TeamInfo GetTeamInfo(V5RPC.Proto.Version serverVersion)
         {
             return new TeamInfo { TeamName = "Legacy DLL" };
         }
@@ -452,7 +475,7 @@ namespace V5DLLAdapter
                 return legacyDll.GetPlacement(field);
         }
 
-        public override TeamInfo GetTeamInfo(ServerInfo info)
+        public override TeamInfo GetTeamInfo(V5RPC.Proto.Version serverVersion)
         {
             return new TeamInfo() { TeamName = "Nobody" };
         }
