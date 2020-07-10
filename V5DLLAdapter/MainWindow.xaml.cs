@@ -257,34 +257,35 @@ namespace V5DLLAdapter
 
         public void Log(string message, string tag = "V5DLLAdapter", Severity severity = Severity.Info)
         {
+            if (!Dispatcher.CheckAccess())
+            {
+                Dispatcher.BeginInvoke(new Action<string, string, Severity>(Log), message, tag, severity);
+                return;
+            }
             if (LogOutput.Count >= MAX_LOG_ITEMS)
             {
                 LogOutput.RemoveAt(0);
             }
-
             bool scrollToEnd = false;
             ScrollViewer logScroller = null;
-            this.Dispatcher.BeginInvoke((Action)delegate ()
+            try
             {
-                try
-                {
-                    var border = (Border) VisualTreeHelper.GetChild(logItems, 0);
-                    logScroller = (ScrollViewer) VisualTreeHelper.GetChild(border, 0);
-                    scrollToEnd = logScroller.VerticalOffset == logScroller.ScrollableHeight;
-                }
-                // 使用 -Start 参数启动时，视觉元素尚未初始化
-                catch (ArgumentOutOfRangeException)
-                {
-                }
-                var entry = new LogEntry
-                {
-                    dateTime = DateTime.Now,
-                    severity = severity,
-                    tag = tag,
-                    message = message
-                };
-                LogOutput.Add(entry);
-            });
+                var border = (Border)VisualTreeHelper.GetChild(logItems, 0);
+                logScroller = (ScrollViewer)VisualTreeHelper.GetChild(border, 0);
+                scrollToEnd = logScroller.VerticalOffset == logScroller.ScrollableHeight;
+            }
+            // 使用 -Start 参数启动时，视觉元素尚未初始化
+            catch (ArgumentOutOfRangeException)
+            {
+            }
+            var entry = new LogEntry
+            {
+                dateTime = DateTime.Now,
+                severity = severity,
+                tag = tag,
+                message = message
+            };
+            LogOutput.Add(entry);
             if (scrollToEnd)
             {
                 logScroller.ScrollToEnd();

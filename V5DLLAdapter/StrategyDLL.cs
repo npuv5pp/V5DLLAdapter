@@ -80,10 +80,11 @@ namespace V5DLLAdapter
 
         public const int MAX_STRING_LEN = 128;
 
-        public Action<string, string, Severity> Log;
+        Action<string, string, Severity> Log;
 
         public StrategyDll()
         {
+            this.Log = (string str1, string str2, Severity severity) => { };
         }
 
         public StrategyDll(Action<string, string, Severity> Log)
@@ -191,11 +192,11 @@ namespace V5DLLAdapter
                 }
                 case V5RPC.Proto.Version.V11:
                 {
-                    version = "1.0";
+                    version = "1.1";
                     break;
                 }
             }
-            Log("接口版本为"+version, "V5DLLAdapter", Severity.Verbose);
+            Log($"接口版本为 {version}", "V5DLLAdapter", Severity.Verbose);
             if (_getTeamInfo == null)
             {
                 throw new DllNotFoundException();
