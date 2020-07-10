@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "V5DLLAdapter", "V5DLLAdapte
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "V5RPC", "V5RPC\V5RPC\V5RPC.csproj", "{F010E944-A6EE-4666-BCA7-6BC201C6752F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "V5PyAdapter", "V5PyAdapter\V5PyAdapter.csproj", "{6DB1C159-EE6D-4408-AB42-2203AD6B04C6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,6 +26,10 @@ Global
 		{F010E944-A6EE-4666-BCA7-6BC201C6752F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F010E944-A6EE-4666-BCA7-6BC201C6752F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F010E944-A6EE-4666-BCA7-6BC201C6752F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6DB1C159-EE6D-4408-AB42-2203AD6B04C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6DB1C159-EE6D-4408-AB42-2203AD6B04C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6DB1C159-EE6D-4408-AB42-2203AD6B04C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6DB1C159-EE6D-4408-AB42-2203AD6B04C6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
