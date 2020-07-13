@@ -10,7 +10,6 @@ namespace V5PyAdapter
         {
             string name = args[0];
             int port = int.Parse(args[1]);
-            Console.WriteLine("Hello World!");
             PythonStrategy strategy = new PythonStrategy(name);
             StrategyServer server = new StrategyServer(port, strategy);
             server.Run();

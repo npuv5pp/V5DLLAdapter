@@ -1,7 +1,9 @@
 .vs/
+.vscode/
 packages/
 bin/
 obj/
 launchSettings.json
 .idea
+__pycache__
 *.DotSettings.user

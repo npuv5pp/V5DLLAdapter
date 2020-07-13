@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.IO;
 using V5RPC;
 using V5RPC.Proto;
 using Python.Runtime;
@@ -14,8 +14,9 @@ namespace V5PyAdapter
             using (Py.GIL())
             {
                 dynamic sys = Py.Import("sys");
-                sys.path.insert(0,"");
-                strategy = Py.Import(name);                
+                System.Console.WriteLine(Path.GetDirectoryName(Path.GetFullPath(name)));
+                sys.path.insert(0,Path.GetDirectoryName(Path.GetFullPath(name)));
+                strategy = Py.Import(Path.GetFileNameWithoutExtension(name));
             }
         }
 
