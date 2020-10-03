@@ -69,7 +69,7 @@ class Wheel:
 
 
 class Robot:
-    Sosition: Vector2
+    Position: Vector2
     Rotation: float
     Wheel: Wheel
 
