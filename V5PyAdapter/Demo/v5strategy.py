@@ -29,6 +29,7 @@ def get_team_info(serverVersion: int) -> str:
 
 @catchall
 def get_instruction(field: Field):
+    field = Field(field)
     if(field.Tick % 10 == 0):
         print(f'tick = {field.Tick}')
     return [(125, -125), (125, -125), (125, -125), (125, -125), (125, -125)],0
